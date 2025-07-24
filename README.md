@@ -1,40 +1,40 @@
-🏠 Banco Imobiliário Terminal Edition
-Um jogo de tabuleiro clássico implementado em Haskell com interface em terminal, suporte a bots e ranking persistente.
+# 🏠 Banco Imobiliário Terminal Edition
 
-🎯 Objetivo do Projeto
+> Um jogo de tabuleiro clássico implementado em Haskell com interface em terminal, suporte a bots e ranking persistente.
+
+---
+
+## 🎯 Objetivo do Projeto
+
 O objetivo principal é simular a experiência de jogar Banco Imobiliário com:
 
-Regras da versão tradicional e variações populares entre jogadores
+- Regras da versão tradicional e variações populares entre jogadores  
+- Interface totalmente em terminal  
+- Estatísticas salvas em arquivos `.txt`  
+- Ranking entre jogadores baseado em desempenho  
+- Suporte a bots com comportamento semi-inteligente  
 
-Interface totalmente em terminal
+---
 
-Estatísticas salvas em arquivos .txt
+## 📦 O que o projeto contém
 
-Ranking entre jogadores baseado em desempenho
+- 🎲 Simulação completa do jogo com movimentação, sorte de dados, compra e venda de propriedades, pagamento de aluguel, prisão, impostos e construções  
+- 👥 Suporte a até 4 jogadores (misturando humanos e bots)  
+- 💼 Estrutura de banco que aplica as regras, administra turnos e processa ações  
+- 🏗️ Sistema de construções com casas e hotéis  
+- 🧠 Algoritmo de bots com decisões baseadas em aleatoriedade e heurísticas  
+- 📊 Sistema de ranking persistente com estatísticas como:
+  - Nome do jogador  
+  - Número de vitórias e derrotas  
+  - Saldo total acumulado  
+  - Quantidade de propriedades no fim das partidas  
+- 🖥️ Interface interativa em terminal, com menus, exibição do tabuleiro e ações por turno
 
-Suporte a bots com comportamento semi-inteligente
+---
 
-📦 O que o projeto contém
-🎲 Simulação completa do jogo com movimentação, sorte de dados, compra e venda de propriedades, pagamento de aluguel, prisão, impostos e construções
+## 📁 Estrutura de Pastas
 
-👥 Suporte a até 4 jogadores (misturando humanos e bots)
-
-💼 Estrutura de banco que aplica as regras, administra turnos e processa ações
-
-🏗️ Sistema de construções com casas e hotéis
-
-🧠 Algoritmo de bots com decisões baseadas em aleatoriedade e heurísticas
-
-📊 Sistema de ranking persistente com estatísticas como:
-
-Nome do jogador
-
-Número de vitórias e derrotas
-
-Saldo total acumulado
-
-Quantidade de propriedades no fim das partidas
-📁 Estrutura de Pastas
+```plaintext
 banco-imobiliario/
 │
 ├── app/
@@ -70,15 +70,12 @@ banco-imobiliario/
 │   └── ...                           -- Testes unitários (opcional)
 │
 ├── stack.yaml / cabal.project        -- Configuração do projeto Haskell
-├── banco-imobiliario.cabal    
+├── banco-imobiliario.cabal           -- Declaração do executável, módulos etc.
+└── README.md                         -- Instruções e visão geral do projeto
 
-🖥️ Interface interativa em terminal, com menus, exibição do tabuleiro e ações por turno
+## 🛠 Tecnologias e Ferramentas
 
-🛠 Tecnologias e Ferramentas
-Linguagem: Haskell
-
-Execução: Terminal (modo texto)
-
-Persistência: Arquivos .txt
-
-Organização modular com separação entre lógica do jogo, interface e persistência
+- **Linguagem:** Haskell  
+- **Execução:** Terminal (modo texto)  
+- **Persistência:** Arquivos `.txt`  
+- **Arquitetura:** Organização modular com separação entre lógica do jogo, interface e persistência  
