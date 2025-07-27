@@ -1,14 +1,16 @@
 module Game.Board where
-    import Game.BoardHouse
+    import qualified Game.BoardHouse as Bh
     
     data Board = Board{
 
         title :: String,
         description :: String,
-        nameOfInitialHouse :: String,
-        idOfInitialHouse :: Int,
+        initialHouse :: Bh.BoardHouse,
         openingBalance :: Int,
         balancePerShift :: Int,
-        housesOnTheBoard :: [BoardHouse]
+        housesOnTheBoard :: [Bh.BoardHouse]
 
     } deriving(Show, Read)
+    
+
+    
