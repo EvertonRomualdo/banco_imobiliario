@@ -1,5 +1,5 @@
 module Game.Player where
-    import Game.BoardHouse
+    import qualified Game.BoardHouse as Bh
 
     data Player = Player{
         playerId :: Int,
@@ -7,6 +7,38 @@ module Game.Player where
         position :: Int,
         balance :: Int,
         blockedShifts :: Int,
-        properties :: [BoardHouse]
+        properties :: [Bh.BoardHouse]
         
     } deriving (Show, Read)
+
+    advancePosition :: Player -> Int -> Player
+    advancePosition p value = p {position = position p + value}
+    
+    addMoney :: Player -> Int -> Player
+    addMoney p  value = p { balance = balance p + value}
+
+    takeMoney :: Player -> Int -> Player
+    takeMoney p value = p { balance = balance p - value}
+
+    setBlockedShifts :: Player -> Int -> Player
+    setBlockedShifts p shifts = p {blockedShifts = shifts}
+
+    decrementBlockedShifts :: Player -> Player
+    decrementBlockedShifts p = p {blockedShifts = blockedShifts p - 1}
+
+    addProperty :: Player -> Bh.BoardHouse -> Player
+    addProperty p property = p {properties = properties p ++ [property]}
+
+    removePropertyById :: Player -> Int -> Player
+    removePropertyById p i  = let newProperty = recursiveRemovePropertyById (properties p) [] i
+        in p {properties = newProperty}
+    
+    recursiveRemovePropertyById :: [Bh.BoardHouse] -> [Bh.BoardHouse]-> Int -> [Bh.BoardHouse]
+    recursiveRemovePropertyById (a:as) l n = 
+        if Bh.houseId a == n then
+            as ++ l
+        else
+            recursiveRemovePropertyById as (l ++ [a]) n 
+            
+
+    
