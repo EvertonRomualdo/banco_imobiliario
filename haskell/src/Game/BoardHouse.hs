@@ -17,7 +17,7 @@ module Game.BoardHouse where
     } deriving(Show, Read)
     
     instance Eq BoardHouse where
-        (==) h1 h2 = (houseId h1) == (houseId h2) && (houseName h1) == (houseName h2)
+        (==) h1 h2 = (houseId h1) == (houseId h2)
 
 
     updateRentalValue :: BoardHouse -> Int -> BoardHouse
