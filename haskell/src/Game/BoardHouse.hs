@@ -11,6 +11,7 @@ module Game.BoardHouse where
         fixedIncreaseInRentPerCivilHotel :: Int,
         numberCivilHouses :: Int,
         numberCivilHotels :: Int,
+        fixedInitialRentalValue :: Int,
         rentalValue :: Int,
         hasOwner :: Bool
 
@@ -41,6 +42,9 @@ module Game.BoardHouse where
     
     setHasOwner :: BoardHouse -> BoardHouse
     setHasOwner board = board{hasOwner = not (hasOwner board)}
+
+    resetBoardHouse :: BoardHouse -> BoardHouse
+    resetBoardHouse board = board{numberCivilHouses = 0, numberCivilHotels = 0, rentalValue = fixedInitialRentalValue board , hasOwner = False}
 
     
 
