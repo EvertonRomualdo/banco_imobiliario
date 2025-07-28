@@ -11,8 +11,8 @@ module Game.Player where
         
     } deriving (Show, Read)
 
-    advancePosition :: Player -> Int -> Player
-    advancePosition p value = p {position = position p + value}
+    advancePosition :: Player -> Int -> Int -> Player
+    advancePosition p value maxPosition = p{position = mod (position p + value) maxPosition}
     
     addMoney :: Player -> Int -> Player
     addMoney p  value = p { balance = balance p + value}
