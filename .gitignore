@@ -1,0 +1,34 @@
+# === Haskell - Cabal ===
+dist/
+dist-newstyle/
+.cabal-sandbox/
+cabal.sandbox.config
+*.cabal~       # arquivos temporários de backup
+*.hi           # arquivos de interface compilados
+*.o            # arquivos objeto
+*.chi          # interface de GHCi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+
+# === Stack (caso use também) ===
+.stack-work/
+
+# === Binários gerados ===
+*.exe
+*.out
+*.app
+*.so
+*.dll
+*.a
+*.dyn
+
+# === VSCode ===
+.vscode/
+*.code-workspace
+
+# === Outros arquivos temporários ===
+*~
+*.swp
+.DS_Store
+Thumbs.db
