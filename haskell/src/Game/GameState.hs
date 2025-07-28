@@ -1,4 +1,14 @@
-module Game.GameState where
+module Game.GameState
+  ( GameState(..)
+  , getCurrentPlayer
+  , updateCurrentPlayer
+  , nextPlayer
+  , updatePlayerById
+  , removePlayer
+  , getBoardHouseById
+  , updateBoardHouse
+  ,  turnCount
+  ) where
 
 import Game.Player
 import Game.BoardHouse

@@ -1,55 +1,55 @@
 module Main where
 
+import System.IO (hFlush, stdout)
+import qualified MyLib (loopJogo)
 import qualified Game.Player as Pl
 import qualified Game.Board as Gb
-import qualified Game.BoardHouse as Bh
-import Game.GameState
-import Game.GameLoop
-import Game.Ranking (salvarVencedor, salvarDerrotado, mostrarRanking)
+import Game.GameState (GameState(..))
+
 
 main :: IO ()
 main = do
-  putStrLn "🏁 Bem-vindo ao Banco Imobiliário Terminal!"
-  loopJogo estadoInicial
+    putStrLn "🎲 Bem-vindo ao Banco Imobiliário Terminal!"
+    menuInicial
 
--- Jogadores iniciais
-jogadores :: [Pl.Player]
-jogadores =
-  [ Pl.Player 1 "Alice" 0 1000 0 []
-  , Pl.Player 2 "Bob"   0 1000 0 []
-  ]
+menuInicial :: IO ()
+menuInicial = do
+    putStrLn "\n📋 Menu:"
+    putStrLn "1. Cadastrar jogadores"
+    putStrLn "2. Sair"
+    putStr "Escolha uma opção: "
+    hFlush stdout
+    opcao <- getLine
+    case opcao of
+        "1" -> do
+            jogadores <- cadastrarJogadores
+            iniciarJogo jogadores
+        "2" -> putStrLn "👋 Até logo!"
+        _   -> do
+            putStrLn "❌ Opção inválida, tente novamente."
+            menuInicial
 
--- Tabuleiro gerado com 20 casas
-tabuleiroInicial :: Gb.Board
-tabuleiroInicial =
-  let casas = Gb.gerarCasas
-  in Gb.Board
-      "Banco Imobiliário Terminal"
-      "Versão de 20 casas, com imposto, prisão e especiais"
-      (head casas)
-      1000  -- saldo inicial
-      200   -- bônus por passar na casa inicial
-      casas
+cadastrarJogadores :: IO [Pl.Player]
+cadastrarJogadores = do
+    putStr "Quantos jogadores? (2 a 4): "
+    hFlush stdout
+    qtdStr <- getLine
+    case reads qtdStr :: [(Int, String)] of
+        [(qtd, "")] | qtd >= 2 && qtd <= 4 -> mapM criarJogador [1..qtd]
+        _ -> do
+            putStrLn "❗ Entrada inválida. Digite um número entre 2 e 4."
+            cadastrarJogadores
 
--- Estado inicial do jogo
-estadoInicial :: GameState
-estadoInicial = GameState jogadores (Gb.housesOnTheBoard tabuleiroInicial) 0 20 0
+criarJogador :: Int -> IO Pl.Player
+criarJogador pid = do
+    putStr $ "Nome do jogador " ++ show pid ++ ": "
+    hFlush stdout
+    nome <- getLine
+    return $ Pl.Player pid nome 0 1000 0 []
 
-
--- Loop principal
-loopJogo :: GameState -> IO ()
-loopJogo gs = do
-  if length (players gs) <= 1 then do
-    let vencedor = head (players gs)
-    putStrLn $ "\n🏆 " ++ Pl.name vencedor ++ " venceu o jogo!"
-
-    -- Atualiza o ranking
-    salvarVencedor vencedor
-    mapM_ salvarDerrotado (filter ((/= Pl.playerId vencedor) . Pl.playerId) (players gs))
-
-    -- Mostra ranking final
-    putStrLn "\n📊 Ranking atualizado:"
-    mostrarRanking
-  else do
-    novoEstado <- playTurn gs
-    loopJogo novoEstado
+iniciarJogo :: [Pl.Player] -> IO ()
+iniciarJogo jogadores = do
+    let board = Gb.tabuleiroInicial
+    let casas = Gb.housesOnTheBoard board
+    let estadoInicial = GameState jogadores casas 0 20 0
+    MyLib.loopJogo estadoInicial

@@ -1,5 +1,7 @@
 module Game.Board (
     Board(..),
+    housesOnTheBoard,
+    tabuleiroInicial,
     gerarCasas
 ) where
 
@@ -37,3 +39,14 @@ gerarCasas =
   , BoardHouse 18 "Cidade Ciano"    "Cidade"   390 590  50 100 24  46  0  0  59 59 False
   , BoardHouse 19 "Cidade Dourada"  "Cidade"   550 800  50 100 35  55  0  0  80 80 False
   ]
+
+tabuleiroInicial :: Board
+tabuleiroInicial =
+  let casas = gerarCasas
+  in Board
+      "Banco Imobiliário Terminal"
+      "Versão de 20 casas, com imposto, prisão e especiais"
+      (head casas)
+      1000
+      200
+      casas

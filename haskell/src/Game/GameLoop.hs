@@ -7,6 +7,7 @@ import Game.BoardHouse
 import Game.GameState
 import Data.List (find)
 
+
 -- Função principal que roda o turno de um jogador
 playTurn :: GameState -> IO GameState
 playTurn gs = do
