@@ -25,6 +25,7 @@ loopJogo gs = do
         -- Oferece o menu de informações
         menuEntreTurnos jogadorAtual gs
 
+
         -- Executa o turno
         novoEstado <- playTurn gs
 
