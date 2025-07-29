@@ -108,27 +108,27 @@ construirUmaUnicaVez gs player casa
     | Bh.numberCivilHouses casa < 2 = do
         let custo = Bh.fixedCivilHouseValue casa
         if balance player < custo then do
-            putStrLn "💸 Saldo insuficiente para construir uma casa."
+            putStrLn " Saldo insuficiente para construir uma casa."
             return gs
         else do
             let novaCasa = Bh.incrementNumberCivilHouses casa
             let novoPlayer = addProperty (removePropertyById (takeMoney player custo) (Bh.houseId casa)) novaCasa
-            putStrLn "🏠 Casa construída com sucesso!"
+            putStrLn " Casa construída com sucesso!"
             return $ updatePlayerById (updateBoardHouse gs novaCasa) novoPlayer
 
     | Bh.numberCivilHotels casa < 2 = do
         let custo = Bh.fixedCivilHotelValue casa
         if balance player < custo then do
-            putStrLn "💸 Saldo insuficiente para construir um hotel."
+            putStrLn " Saldo insuficiente para construir um hotel."
             return gs
         else do
             let novaCasa = Bh.incrementNumberCivilHotels casa
             let novoPlayer = addProperty (removePropertyById (takeMoney player custo) (Bh.houseId casa)) novaCasa
-            putStrLn "🏨 Hotel construído com sucesso!"
+            putStrLn " Hotel construído com sucesso!"
             return $ updatePlayerById (updateBoardHouse gs novaCasa) novoPlayer
 
     | otherwise = do
-        putStrLn "✅ Esta propriedade já atingiu o limite máximo de construções."
+        putStrLn " Esta propriedade já atingiu o limite máximo de construções."
         return gs
 
 
