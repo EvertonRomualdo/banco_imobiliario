@@ -14,13 +14,13 @@ loopJogo :: GameState -> IO ()
 loopJogo gs = do
     if length (players gs) <= 1 then do
         let vencedor = head (players gs)
-        putStrLn $ "\n🏆 " ++ Pl.name vencedor ++ " venceu o jogo!"
+        putStrLn $ "\n " ++ Pl.name vencedor ++ " venceu o jogo!"
         Game.Ranking.salvarVencedor vencedor
         mapM_ Game.Ranking.salvarDerrotado (filter ((/= Pl.playerId vencedor) . Pl.playerId) (players gs))
     else do
-        putStrLn $ "\n📢 Rodada: " ++ show (turnCount gs)
+        putStrLn $ "\n Rodada: " ++ show (turnCount gs)
         let jogadorAtual = getCurrentPlayer gs
-        putStrLn $ "🎯 Vez de: " ++ Pl.name jogadorAtual
+        putStrLn $ " Vez de: " ++ Pl.name jogadorAtual
 
         -- Oferece o menu de informações
         menuEntreTurnos jogadorAtual gs
@@ -34,7 +34,7 @@ loopJogo gs = do
 
 menuEntreTurnos :: Pl.Player -> GameState -> IO ()
 menuEntreTurnos jogador gs = do
-    putStrLn "\n📋 Mais opções:"
+    putStrLn "\n Mais opções:"
     putStrLn "1. Continuar"
     putStrLn "2. Ver saldo"
     putStrLn "3. Ver propriedades"
@@ -47,31 +47,31 @@ menuEntreTurnos jogador gs = do
         ""  -> return ()
         "1" -> return ()
         "2" -> do
-            putStrLn $ "💰 Saldo: R$" ++ show (Pl.balance jogador)
+            putStrLn $ " Saldo: R$" ++ show (Pl.balance jogador)
             menuEntreTurnos jogador gs
         "3" -> do
-            putStrLn "🏠 Propriedades:"
+            putStrLn " Propriedades:"
             if null (Pl.properties jogador)
                 then putStrLn "  (nenhuma)"
                 else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties jogador)
             menuEntreTurnos jogador gs
         "4" -> do
-            putStrLn $ "📍 Posição atual: " ++ show (Pl.position jogador)
+            putStrLn $ " Posição atual: " ++ show (Pl.position jogador)
             menuEntreTurnos jogador gs
         "5" -> do
-            putStrLn $ "🔄 Rodada atual: " ++ show (turnCount gs)
+            putStrLn $ " Rodada atual: " ++ show (turnCount gs)
             menuEntreTurnos jogador gs
         "6" -> do
-            putStrLn $ "💰 Saldo: R$" ++ show (Pl.balance jogador)
-            putStrLn $ "📍 Posição: " ++ show (Pl.position jogador)
-            putStrLn $ "🔄 Rodada: " ++ show (turnCount gs)
-            putStrLn "🏠 Propriedades:"
+            putStrLn $ " Saldo: R$" ++ show (Pl.balance jogador)
+            putStrLn $ " Posição: " ++ show (Pl.position jogador)
+            putStrLn $ " Rodada: " ++ show (turnCount gs)
+            putStrLn " Propriedades:"
             if null (Pl.properties jogador)
                 then putStrLn "  (nenhuma)"
                 else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties jogador)
             menuEntreTurnos jogador gs
         _   -> do
-            putStrLn "❌ Opção inválida."
+            putStrLn " Opção inválida."
             menuEntreTurnos jogador gs
 
 

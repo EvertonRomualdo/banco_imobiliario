@@ -64,7 +64,7 @@ mostrarRanking = do
     else do
         conteudo <- readFile rankingFile
         let stats = map lerLinha (lines conteudo)
-        putStrLn "\n🏆 RANKING DE JOGADORES:"
+        putStrLn "\n RANKING DE JOGADORES:"
         putStrLn "Jogador | Vitórias | Derrotas | Saldo Total | Propriedades"
         mapM_ imprimir stats
   where

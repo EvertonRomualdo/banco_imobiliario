@@ -9,12 +9,12 @@ import Game.GameState (GameState(..))
 
 main :: IO ()
 main = do
-    putStrLn "🎲 Bem-vindo ao Banco Imobiliário Terminal!"
+    putStrLn " Bem-vindo ao Banco Imobiliário Terminal!"
     menuInicial
 
 menuInicial :: IO ()
 menuInicial = do
-    putStrLn "\n📋 Menu:"
+    putStrLn "\n Menu:"
     putStrLn "1. Cadastrar jogadores"
     putStrLn "2. Sair"
     putStr "Escolha uma opção: "
@@ -24,9 +24,9 @@ menuInicial = do
         "1" -> do
             jogadores <- cadastrarJogadores
             iniciarJogo jogadores
-        "2" -> putStrLn "👋 Até logo!"
+        "2" -> putStrLn " Até logo!"
         _   -> do
-            putStrLn "❌ Opção inválida, tente novamente."
+            putStrLn " Opção inválida, tente novamente."
             menuInicial
 
 cadastrarJogadores :: IO [Pl.Player]
@@ -37,7 +37,7 @@ cadastrarJogadores = do
     case reads qtdStr :: [(Int, String)] of
         [(qtd, "")] | qtd >= 2 && qtd <= 4 -> mapM criarJogador [1..qtd]
         _ -> do
-            putStrLn "❗ Entrada inválida. Digite um número entre 2 e 4."
+            putStrLn " Entrada inválida. Digite um número entre 2 e 4."
             cadastrarJogadores
 
 criarJogador :: Int -> IO Pl.Player
