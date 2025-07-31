@@ -4,7 +4,6 @@ import System.IO (hFlush, stdout)
 import qualified MyLib (loopJogo)
 import qualified Game.Player as Pl
 import qualified Game.Board as Gb
-import Game.GameState (GameState(..))
 
 
 main :: IO ()
@@ -49,7 +48,6 @@ criarJogador pid = do
 
 iniciarJogo :: [Pl.Player] -> IO ()
 iniciarJogo jogadores = do
-    let board = Gb.tabuleiroInicial
-    let casas = Gb.housesOnTheBoard board
-    let estadoInicial = GameState jogadores casas 0 20 0
-    MyLib.loopJogo estadoInicial
+    let board = Gb.tabuleiroInicial jogadores
+    
+    MyLib.loopJogo board

@@ -2,9 +2,17 @@ module Game.Board (
     Board(..),
     housesOnTheBoard,
     tabuleiroInicial,
-    gerarCasas
+    gerarCasas, 
+    getCurrentPlayer,
+    updateCurrentPlayer,
+    updatePlayerById,
+    nextPlayer,
+    removePlayer,
+    updateBoardHouse,
+    getBoardHouseById
 ) where
 
+import Game.Player
 import Game.BoardHouse
 
 data Board = Board {
@@ -13,8 +21,55 @@ data Board = Board {
     initialHouse :: BoardHouse,
     openingBalance :: Int,
     balancePerShift :: Int,
-    housesOnTheBoard :: [BoardHouse]
+    housesOnTheBoard :: [BoardHouse],
+    players :: [Player],           
+    currentPlayerIndex :: Int,        
+    maxPosition :: Int,               
+    turnCount :: Int
 } deriving (Show, Read)
+
+-- Obtém o jogador atual
+getCurrentPlayer :: Board -> Player
+getCurrentPlayer board = players board !! currentPlayerIndex board
+
+-- Atualiza um jogador na lista (substitui o jogador atual)
+updateCurrentPlayer :: Board -> Player -> Board
+updateCurrentPlayer board updatedPlayer =
+    let index = currentPlayerIndex board
+        updatedPlayers = take index (players board) ++ [updatedPlayer] ++ drop (index + 1) (players board)
+    in board { players = updatedPlayers }
+
+-- Atualiza um jogador por ID (útil ao atualizar fora do turno atual)
+updatePlayerById :: Board -> Player -> Board
+updatePlayerById board updatedPlayer =
+    let updatedPlayers = map (\p -> if playerId p == playerId updatedPlayer then updatedPlayer else p) (players board)
+    in board { players = updatedPlayers }
+
+-- Avança para o próximo jogador
+nextPlayer :: Board -> Board
+nextPlayer board =
+    let totalPlayers = length (players board)
+        nextIdx = (currentPlayerIndex board + 1) `mod` totalPlayers -- melhorar
+    in board { currentPlayerIndex = nextIdx, turnCount = turnCount board + 1 }
+
+-- Remove jogador por ID (por falência, por exemplo)
+removePlayer :: Board -> Int -> Board
+removePlayer board pid =
+    let updatedPlayers = filter (\p -> playerId p /= pid) (players board)
+        newIdx = if currentPlayerIndex board >= length updatedPlayers then 0 else currentPlayerIndex board
+    in board { players = updatedPlayers, currentPlayerIndex = newIdx }
+
+-- Substitui uma casa no tabuleiro (por ID)
+updateBoardHouse :: Board -> BoardHouse -> Board
+updateBoardHouse board newHouse =
+    let updatedBoard = map (\h -> if houseId h == houseId newHouse then newHouse else h) (housesOnTheBoard board)
+    in board { housesOnTheBoard = updatedBoard }
+
+getBoardHouseById :: Board -> Int -> Maybe BoardHouse
+getBoardHouseById board hid = 
+    case filter (\h -> houseId h == hid) (housesOnTheBoard board) of
+        [] -> Nothing
+        (h:_) -> Just h
 
 gerarCasas :: [BoardHouse]
 gerarCasas =
@@ -40,8 +95,8 @@ gerarCasas =
   , BoardHouse 19 "Cidade Dourada"  "Cidade"   550 800  50 100 35  55  0  0  80 80 False
   ]
 
-tabuleiroInicial :: Board
-tabuleiroInicial =
+tabuleiroInicial :: [Player] -> Board
+tabuleiroInicial pls =
   let casas = gerarCasas
   in Board
       "Banco Imobiliário Terminal"
@@ -50,3 +105,7 @@ tabuleiroInicial =
       1000
       200
       casas
+      pls
+      0
+      (length casas - 1)
+      0

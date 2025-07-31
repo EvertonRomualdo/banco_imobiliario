@@ -4,12 +4,12 @@ import qualified Game.BoardHouse as Bh
 import System.Random (randomRIO)
 import Game.Player
 import Game.BoardHouse
-import Game.GameState
+import Game.Board
 import Data.List (find)
 
 
 -- Função principal que roda o turno de um jogador
-playTurn :: GameState -> IO GameState
+playTurn :: Board -> IO Board
 playTurn gs = do
     let player = getCurrentPlayer gs
     if isBlocked player then do
@@ -44,7 +44,7 @@ rollDice :: IO Int
 rollDice = randomRIO (1, 6)
 
     -- Aplica o efeito de acordo com o tipo da casa
-applyHouseEffect :: GameState -> Player -> BoardHouse -> IO GameState
+applyHouseEffect :: Board -> Player -> BoardHouse -> IO Board
 applyHouseEffect gs player house = case houseType house of
     "Imposto" -> do
         let imposto = calculateTax player
@@ -103,7 +103,7 @@ applyHouseEffect gs player house = case houseType house of
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
-construirUmaUnicaVez :: GameState -> Player -> Bh.BoardHouse -> IO GameState
+construirUmaUnicaVez :: Board -> Player -> Bh.BoardHouse -> IO Board
 construirUmaUnicaVez gs player casa
     | Bh.numberCivilHouses casa < 2 = do
         let custo = Bh.fixedCivilHouseValue casa

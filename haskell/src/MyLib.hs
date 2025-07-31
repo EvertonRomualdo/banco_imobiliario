@@ -2,7 +2,7 @@ module MyLib where
 
 import Game.Ranking (salvarVencedor, salvarDerrotado, mostrarRanking)
 import Game.GameLoop (playTurn)
-import Game.GameState
+import Game.Board
 
 import Game.Player (name, playerId)
 import qualified Game.Player as Pl
@@ -10,7 +10,7 @@ import qualified Game.BoardHouse as Bh
 import qualified Game.Ranking
 
 
-loopJogo :: GameState -> IO ()
+loopJogo :: Board -> IO ()
 loopJogo gs = do
     if length (players gs) <= 1 then do
         let vencedor = head (players gs)
@@ -32,7 +32,7 @@ loopJogo gs = do
         -- Loop recursivo
         loopJogo novoEstado
 
-menuEntreTurnos :: Pl.Player -> GameState -> IO ()
+menuEntreTurnos :: Pl.Player -> Board -> IO ()
 menuEntreTurnos jogador gs = do
     putStrLn "\n Mais opções:"
     putStrLn "1. Continuar"
