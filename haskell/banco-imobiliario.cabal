@@ -59,7 +59,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib, Game.Player, Game.BoardHouse, Game.Board, Game.GameLoop, Game.Ranking
+    exposed-modules:  MyLib, Game.Player, Game.BoardHouse, Game.Board, Game.GameLoop, Game.Ranking, Game.Interface
 
     -- Modules included in this library but not exported.
     -- other-modules:

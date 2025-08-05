@@ -12,12 +12,18 @@ import qualified Game.Ranking
 
 loopJogo :: Board -> IO ()
 loopJogo gs = do
+
+    --Verifica se ha um vencedor
     if length (players gs) <= 1 then do
         let vencedor = head (players gs)
         putStrLn $ "\n " ++ Pl.name vencedor ++ " venceu o jogo!"
         Game.Ranking.salvarVencedor vencedor
         mapM_ Game.Ranking.salvarDerrotado (filter ((/= Pl.playerId vencedor) . Pl.playerId) (players gs))
+    
+    --Inicia a proxima rodada
     else do
+        --Determina de quem é a vez
+        --Deve verificar se o proximo jogador é um bot exibindo um menu diferente
         putStrLn $ "\n Rodada: " ++ show (turnCount gs)
         let jogadorAtual = getCurrentPlayer gs
         putStrLn $ " Vez de: " ++ Pl.name jogadorAtual
@@ -73,5 +79,7 @@ menuEntreTurnos jogador gs = do
         _   -> do
             putStrLn " Opção inválida."
             menuEntreTurnos jogador gs
+
+
 
 

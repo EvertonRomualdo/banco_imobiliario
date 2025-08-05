@@ -6,38 +6,61 @@ import Game.Player
 import Game.BoardHouse
 import Game.Board
 import Data.List (find)
+import Game.GameRules
+import Game.Interface
+
+--Decrementa os turnos bloqueados e retorna o novo board
+blockedPlayer :: Player -> Board -> IO Board
+blockedPlayer player gs = do 
+    putStrLn((name player) ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
+    let updatedPlayer = decrementBlockedShifts player
+    return  $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
+
+movePlayer :: Player -> Board -> IO Board
+movePlayer player gs = do
+    dice <- rollDice
+    let movedPlayer = advancePosition player dice (maxPosition gs)
+    putStrLn $ name movedPlayer ++ " rolou " ++ show dice ++ " e foi para a posição " ++ show (position movedPlayer)
+
+    case getBoardHouseById gs (position movedPlayer) of
+        Nothing -> do
+            putStrLn "Erro: posição inválida no tabuleiro."
+            return $ nextPlayer $ updateCurrentPlayer gs movedPlayer
+        --Chama função que aplica o efeito da casa
+        Just house -> do
+            gs1 <- applyHouseEffect gs movedPlayer house
+            processConstructionIfAvailable gs1
+
+
+canBuildOnHouse :: Player -> BoardHouse -> Bool
+canBuildOnHouse player house =
+    houseType house == "Cidade"
+    && hasOwner house
+    && any ((== houseId house) . Bh.houseId) (properties player)
+
+
+processConstructionIfAvailable :: Board -> IO Board
+processConstructionIfAvailable gs = 
+    let player = getCurrentPlayer gs
+        pos = position player
+    in case getBoardHouseById gs pos of
+        Just house | canBuildOnHouse player house -> do
+            gs' <- construirUmaUnicaVez gs player house
+            return $ nextPlayer gs'
+        _ -> return $ nextPlayer gs
+
 
 
 -- Função principal que roda o turno de um jogador
 playTurn :: Board -> IO Board
 playTurn gs = do
     let player = getCurrentPlayer gs
+    --Verifica se o jogador esta preso
     if isBlocked player then do
-        putStrLn $ name player ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s)."
-        let updatedPlayer = decrementBlockedShifts player
-        return $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
+        blockedPlayer player gs
+        
     else do
-        dice <- rollDice
-        let movedPlayer = advancePosition player dice (maxPosition gs)
-        putStrLn $ name movedPlayer ++ " rolou " ++ show dice ++ " e foi para a posição " ++ show (position movedPlayer)
-        case getBoardHouseById gs (position movedPlayer) of
-            Nothing -> do
-                putStrLn "Erro: posição inválida no tabuleiro."
-                return $ nextPlayer $ updateCurrentPlayer gs movedPlayer
-            Just house -> do
-                gs1 <- applyHouseEffect gs movedPlayer house
-
-                -- Após aplicar efeito, verificar se o jogador está parado em propriedade própria para construir
-                let jogadorAtualizado = getCurrentPlayer gs1
-                let pos = position jogadorAtualizado
-                case getBoardHouseById gs1 pos of
-                  Just casaAtual
-                    | houseType casaAtual == "Cidade" &&
-                      hasOwner casaAtual &&
-                      any ((== houseId casaAtual) . Bh.houseId) (properties jogadorAtualizado) -> do
-                          gs2 <- construirUmaUnicaVez gs1 jogadorAtualizado casaAtual
-                          return $ nextPlayer gs2
-                  _ -> return $ nextPlayer gs1
+        movePlayer player gs
 
 -- Rola o dado (1 a 6)
 rollDice :: IO Int
@@ -49,44 +72,53 @@ applyHouseEffect gs player house = case houseType house of
     "Imposto" -> do
         let imposto = calculateTax player
         let updatedPlayer = takeMoney player imposto
-        putStrLn $ name player ++ " pagou R$" ++ show imposto ++ " de imposto."
+        printTaxHouseType (name player) imposto
         return $ updateCurrentPlayer gs updatedPlayer
 
     "Prisao" -> do
         let updatedPlayer = setBlockedShifts player 2
-        putStrLn $ name player ++ " foi preso por 2 turnos!"
+        printPrisonHouseType $ name player
         return $ updateCurrentPlayer gs updatedPlayer
 
     "Especial" -> do
-        putStrLn $ name player ++ " caiu em uma casa especial e vai jogar novamente!"
+        printEspecialHouseType $ name player
         let gs' = updateCurrentPlayer gs player
         playTurn gs'
 
     "Cidade" -> do
+        --codigo complexo; espaço para modularização
         if hasOwner house then do
             let ownerMaybe = find (\p -> any ((== houseId house) . Bh.houseId) (properties p)) (players gs)
             case ownerMaybe of
                 Nothing -> do
-                    putStrLn "Erro: proprietário não encontrado."
+                    exceptionPrintNotFouldOwner
                     return $ updateCurrentPlayer gs player
+                --Mecanica de pagar o aluguel
                 Just owner -> do
                     let rent = rentalValue house
                     let payer = takeMoney player rent
                     let receiver = addMoney owner rent
-                    putStrLn $ name payer ++ " pagou R$" ++ show rent ++ " de aluguel para " ++ name receiver
+                    printRentPayment (name payer) rent (name receiver)
 
+                    --Jogador faliu e foi removido
                     if isBankrupt payer then do
-                        putStrLn $ name payer ++ " faliu!"
+                        printPlayerWentBankrupt $ name payer
                         let gs1 = removePlayer gs (playerId payer)
                         return gs1
                     else do
+
+                        --atualizao estado do jogo
                         let gs1 = updatePlayerById gs payer
                         let gs2 = updatePlayerById gs1 receiver
                         return gs2
+
+        --caso não tenha dono
         else do
+            --Comprar ou não a cidade
             putStrLn $ name player ++ " encontrou uma cidade livre!"
             putStrLn $ "Deseja comprar " ++ houseName house ++ " por R$" ++ show (fixedpurchaseValue house) ++ "? (s/n)"
             response <- getLine
+            --Mecanica de compra de cidade
             if response == "s" then
                 if balance player >= fixedpurchaseValue house then do
                     let newPlayer = addProperty (takeMoney player (fixedpurchaseValue house)) house
@@ -99,10 +131,12 @@ applyHouseEffect gs player house = case houseType house of
             else
                 return $ updateCurrentPlayer gs player
 
+    --ERRO:Casa sem efeito
     _ -> do
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
+--Invalido
 construirUmaUnicaVez :: Board -> Player -> Bh.BoardHouse -> IO Board
 construirUmaUnicaVez gs player casa
     | Bh.numberCivilHouses casa < 2 = do
