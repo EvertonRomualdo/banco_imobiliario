@@ -1,7 +1,7 @@
 module Game.GameState where
 
-import Game.Player
-import Game.BoardHouse
+    import Game.Player
+    import Game.BoardHouse
 
     data GameState = GameState {
         players :: [Player],
