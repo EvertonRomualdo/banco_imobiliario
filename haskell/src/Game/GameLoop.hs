@@ -96,22 +96,34 @@ applyHouseEffect gs player house = case houseType house of
                     return $ updateCurrentPlayer gs player
                 --Mecanica de pagar o aluguel
                 Just owner -> do
-                    let rent = rentalValue house
-                    let payer = takeMoney player rent
-                    let receiver = addMoney owner rent
-                    printRentPayment (name payer) rent (name receiver)
-
-                    --Jogador faliu e foi removido
-                    if isBankrupt payer then do
-                        printPlayerWentBankrupt $ name payer
-                        let gs1 = removePlayer gs (playerId payer)
-                        return gs1
+                    if playerId owner == playerId player then do
+                        -- Jogador é o dono da casa
+                        putStrLn $ name player ++ " caiu na própria propriedade."
+                        putStrLn "Deseja vender esta propriedade? (s/n)"
+                        resp <- getLine
+                        if resp == "s"
+                            then do
+                                sellHouse player house gs
+                            else
+                                return $ updateCurrentPlayer gs player
                     else do
+                        --Tranforma em função
+                        let rent = rentalValue house
+                        let payer = takeMoney player rent
+                        let receiver = addMoney owner rent
+                        printRentPayment (name payer) rent (name receiver)
 
-                        --atualizao estado do jogo
-                        let gs1 = updatePlayerById gs payer
-                        let gs2 = updatePlayerById gs1 receiver
-                        return gs2
+                        --Jogador faliu e foi removido
+                        if isBankrupt payer then do
+                            printPlayerWentBankrupt $ name payer
+                            let gs1 = removePlayer gs (playerId payer)
+                            return gs1
+                        else do
+
+                            --atualizao estado do jogo
+                            let gs1 = updatePlayerById gs payer
+                            let gs2 = updatePlayerById gs1 receiver
+                            return gs2
 
         --caso não tenha dono
         else do
@@ -130,6 +142,14 @@ applyHouseEffect gs player house = case houseType house of
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
+
+sellHouse :: Player -> BoardHouse -> Board -> IO Board
+sellHouse player house board = do
+    let newPlayerBalance = addMoney player (fixedSalesValue house)
+    let newPlayer = removePropertyById newPlayerBalance (houseId house)
+    printSellHouse (name player) (houseName house)
+    return $ updateCurrentPlayer board newPlayer
+    
 
 buyHouseBoard :: Player -> BoardHouse -> Board -> IO Board
 buyHouseBoard player house gs = do

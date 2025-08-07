@@ -31,3 +31,6 @@ printNoHaveMoney playerName = putStrLn(playerName ++ " não tem dinheiro suficie
 
 printPlayerBlocked :: String -> Int -> IO()
 printPlayerBlocked playerName shifts = putStrLn(playerName ++ " está preso por " ++ (show shifts) ++ "turno(s)")
+
+printSellHouse :: String -> String -> IO()
+printSellHouse playerName houseName = putStrLn(playerName ++ " vendeu sua propriedade: " ++ houseName)
