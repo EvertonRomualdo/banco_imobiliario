@@ -21,8 +21,13 @@ printRentPayment payer rent receiver = putStrLn(payer ++ " pagou R$" ++ (show re
 printPlayerWentBankrupt :: String -> IO()
 printPlayerWentBankrupt playerName = putStrLn(playerName ++ " faliu!")
 
+printHousePurchased :: String -> String -> IO()
+printHousePurchased playerName houseName = putStrLn(playerName ++ " comprou " ++ houseName ++ "!")
+
+printNoHaveMoney :: String -> IO()
+printNoHaveMoney playerName = putStrLn(playerName ++ " não tem dinheiro suficiente.")
+
 -- GameLoop
 
 printPlayerBlocked :: String -> Int -> IO()
 printPlayerBlocked playerName shifts = putStrLn(playerName ++ " está preso por " ++ (show shifts) ++ "turno(s)")
-

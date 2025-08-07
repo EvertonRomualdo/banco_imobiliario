@@ -6,9 +6,10 @@ import Game.Player
 import Game.BoardHouse
 import Game.Board
 import Data.List (find)
-import Game.GameRules
 import Game.Interface
 
+
+--Falta mecanica de ganhar dinheiro quando da uma volta
 --Decrementa os turnos bloqueados e retorna o novo board
 blockedPlayer :: Player -> Board -> IO Board
 blockedPlayer player gs = do 
@@ -120,20 +121,25 @@ applyHouseEffect gs player house = case houseType house of
             response <- getLine
             --Mecanica de compra de cidade
             if response == "s" then
-                if balance player >= fixedpurchaseValue house then do
-                    let newPlayer = addProperty (takeMoney player (fixedpurchaseValue house)) house
-                    let newHouse = setHasOwner house
-                    putStrLn $ name player ++ " comprou " ++ houseName house ++ "!"
-                    return $ updateBoardHouse (updatePlayerById gs newPlayer) newHouse
-                else do
-                    putStrLn $ name player ++ " não tem dinheiro suficiente."
-                    return $ updateCurrentPlayer gs player
+                buyHouseBoard player house gs
             else
                 return $ updateCurrentPlayer gs player
 
     --ERRO:Casa sem efeito
     _ -> do
         putStrLn "Casa sem efeito definido."
+        return $ updateCurrentPlayer gs player
+
+
+buyHouseBoard :: Player -> BoardHouse -> Board -> IO Board
+buyHouseBoard player house gs = do
+    if balance player >= fixedpurchaseValue house then do
+        let newPlayer = addProperty (takeMoney player (fixedpurchaseValue house)) house
+        let newHouse = setHasOwner house
+        printHousePurchased (name player) (houseName house)
+        return $ updateBoardHouse (updatePlayerById gs newPlayer) newHouse
+    else do
+        printNoHaveMoney $ name player
         return $ updateCurrentPlayer gs player
 
 --Invalido
@@ -169,3 +175,15 @@ construirUmaUnicaVez gs player casa
 -- Imposto como 10% do saldo atual
 calculateTax :: Player -> Int
 calculateTax p = balance p `div` 10   
+
+
+--------------------------------------------------------------------------------------
+
+--playBot :: Player -> Board -> Board
+--playBot bot board = do 
+    --Calculo se a muitas casas de outros jogadores compradas a frente
+    --Calculo se tenho dinheiro para resistir a passagem
+    --Calculo quanto falta para dar um volta
+    --Decido de forma aleatoria se compro ou não a casa
+
+
