@@ -30,7 +30,7 @@ movePlayer player gs = do
         --Chama função que aplica o efeito da casa
         Just house -> do
             gs1 <- applyHouseEffect gs movedPlayer house
-            processConstructionIfAvailable gs1
+            return $ nextPlayer gs1
 
 
 canBuildOnHouse :: Player -> BoardHouse -> Bool
@@ -40,15 +40,12 @@ canBuildOnHouse player house =
     && any ((== houseId house) . Bh.houseId) (properties player)
 
 
-processConstructionIfAvailable :: Board -> IO Board
-processConstructionIfAvailable gs = 
-    let player = getCurrentPlayer gs
-        pos = position player
-    in case getBoardHouseById gs pos of
-        Just house | canBuildOnHouse player house -> do
-            gs' <- construirUmaUnicaVez gs player house
-            return $ nextPlayer gs'
-        _ -> return $ nextPlayer gs
+processConstructionIfAvailable :: Board -> Player -> IO Board
+processConstructionIfAvailable gs player =
+    case getBoardHouseById gs (position player) of
+        Just house | canBuildOnHouse player house -> buildCivilHouse gs player house
+        _ -> return $ updateCurrentPlayer gs player
+
 
 
 
@@ -87,52 +84,43 @@ applyHouseEffect gs player house = case houseType house of
         playTurn gs'
 
     "Cidade" -> do
-        --codigo complexo; espaço para modularização
         if hasOwner house then do
             let ownerMaybe = find (\p -> any ((== houseId house) . Bh.houseId) (properties p)) (players gs)
             case ownerMaybe of
                 Nothing -> do
                     exceptionPrintNotFouldOwner
                     return $ updateCurrentPlayer gs player
-                --Mecanica de pagar o aluguel
                 Just owner -> do
                     if playerId owner == playerId player then do
-                        -- Jogador é o dono da casa
                         putStrLn $ name player ++ " caiu na própria propriedade."
-                        putStrLn "Deseja vender esta propriedade? (s/n)"
+                        putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
                         resp <- getLine
+                        case resp of
+                            "v" -> do
+                                putStrLn "Deseja fazer um leilão, vender imediatamente (s/leilao ou n/imediato)?"
+                                resp2 <- getLine
+                                if resp2 == "s"
+                                    then houseAuction player gs
+                                    else sellHouse player house gs
+                            "c" -> do
+                                gs' <- processConstructionIfAvailable gs player
+                                return gs'
 
-                        if resp == "s" then do
-                            putStrLn "Deseja fazer um leilao ou vender imediatamente (s/n)(leilão/imediato)"
-                            resp2 <- getLine
-
-                            if resp2 == "s" then
-                                houseAuction player gs
-
-                            else
-                                sellHouse player house gs
-
-                        else
-                            return $ updateCurrentPlayer gs player
-                    else do
+                            _   -> return $ updateCurrentPlayer gs player
+                    else
                         balanceTransfer player owner (rentalValue house) gs
-
-        --caso não tenha dono
         else do
-            --Comprar ou não a cidade
             putStrLn $ name player ++ " encontrou uma cidade livre!"
             putStrLn $ "Deseja comprar " ++ houseName house ++ " por R$" ++ show (fixedpurchaseValue house) ++ "? (s/n)"
             response <- getLine
-            --Mecanica de compra de cidade
-            if response == "s" then
-                buyHouseBoard player house gs
-            else
-                return $ updateCurrentPlayer gs player
+            if response == "s"
+                then buyHouseBoard player house gs
+                else return $ updateCurrentPlayer gs player
 
-    --ERRO:Casa sem efeito
     _ -> do
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
+
 
 balanceTransfer :: Player -> Player -> Int -> Board -> IO Board
 balanceTransfer payer receiver value board = do
@@ -199,33 +187,33 @@ buyHouseBoard player house gs = do
         return $ updateCurrentPlayer gs player
 
 --Invalido
-construirUmaUnicaVez :: Board -> Player -> Bh.BoardHouse -> IO Board
-construirUmaUnicaVez gs player casa
+buildCivilHouse :: Board -> Player -> Bh.BoardHouse -> IO Board
+buildCivilHouse board player casa
     | Bh.numberCivilHouses casa < 2 = do
-        let custo = Bh.fixedCivilHouseValue casa
-        if balance player < custo then do
+        let cost = Bh.fixedCivilHouseValue casa
+        if balance player < cost then do
             putStrLn " Saldo insuficiente para construir uma casa."
-            return gs
+            return board
         else do
-            let novaCasa = Bh.incrementNumberCivilHouses casa
-            let novoPlayer = addProperty (removePropertyById (takeMoney player custo) (Bh.houseId casa)) novaCasa
+            let newHouse = Bh.incrementNumberCivilHouses casa
+            let newPlayer = addProperty (removePropertyById (takeMoney player cost) (Bh.houseId casa)) newHouse
             putStrLn " Casa construída com sucesso!"
-            return $ updatePlayerById (updateBoardHouse gs novaCasa) novoPlayer
+            return $ updatePlayerById (updateBoardHouse board newHouse) newPlayer
 
     | Bh.numberCivilHotels casa < 2 = do
-        let custo = Bh.fixedCivilHotelValue casa
-        if balance player < custo then do
+        let cost = Bh.fixedCivilHotelValue casa
+        if balance player < cost then do
             putStrLn " Saldo insuficiente para construir um hotel."
-            return gs
+            return board
         else do
-            let novaCasa = Bh.incrementNumberCivilHotels casa
-            let novoPlayer = addProperty (removePropertyById (takeMoney player custo) (Bh.houseId casa)) novaCasa
+            let newHouse = Bh.incrementNumberCivilHotels casa
+            let newPlayer = addProperty (removePropertyById (takeMoney player cost) (Bh.houseId casa)) newHouse
             putStrLn " Hotel construído com sucesso!"
-            return $ updatePlayerById (updateBoardHouse gs novaCasa) novoPlayer
+            return $ updatePlayerById (updateBoardHouse board newHouse) newPlayer
 
     | otherwise = do
         putStrLn " Esta propriedade já atingiu o limite máximo de construções."
-        return gs
+        return board
 
 
 -- Imposto como 10% do saldo atual
