@@ -22,14 +22,15 @@ movePlayer player gs = do
     dice <- rollDice
     let movedPlayer = advancePosition player dice (maxPosition gs)
     putStrLn $ name movedPlayer ++ " rolou " ++ show dice ++ " e foi para a posição " ++ show (position movedPlayer)
+    movedPlayerWithSalary <- paySalary movedPlayer player (maxPosition gs) (balancePerShift gs)
 
-    case getBoardHouseById gs (position movedPlayer) of
+    case getBoardHouseById gs (position movedPlayerWithSalary) of
         Nothing -> do
             putStrLn "Erro: posição inválida no tabuleiro."
-            return $ nextPlayer $ updateCurrentPlayer gs movedPlayer
+            return $ nextPlayer $ updateCurrentPlayer gs movedPlayerWithSalary
         --Chama função que aplica o efeito da casa
         Just house -> do
-            gs1 <- applyHouseEffect gs movedPlayer house
+            gs1 <- applyHouseEffect gs movedPlayerWithSalary house
             return $ nextPlayer gs1
 
 
@@ -45,6 +46,18 @@ processConstructionIfAvailable gs player =
     case getBoardHouseById gs (position player) of
         Just house | canBuildOnHouse player house -> buildCivilHouse gs player house
         _ -> return $ updateCurrentPlayer gs player
+
+
+
+paySalary :: Player -> Player -> Int -> Int -> IO Player
+paySalary movedPlayer oldPlayer maxPosition salary = do
+    let newPosition = position movedPlayer
+        oldPosition = position oldPlayer
+    if newPosition < oldPosition then do
+        putStrLn((name movedPlayer) ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
+        return (addMoney movedPlayer salary)
+    else
+        return movedPlayer
 
 
 
