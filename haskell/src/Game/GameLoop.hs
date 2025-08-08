@@ -101,11 +101,19 @@ applyHouseEffect gs player house = case houseType house of
                         putStrLn $ name player ++ " caiu na própria propriedade."
                         putStrLn "Deseja vender esta propriedade? (s/n)"
                         resp <- getLine
-                        if resp == "s"
-                            then do
-                                sellHouse player house gs
+
+                        if resp == "s" then do
+                            putStrLn "Deseja fazer um leilao ou vender imediatamente (s/n)(leilão/imediato)"
+                            resp2 <- getLine
+
+                            if resp2 == "s" then
+                                houseAuction player gs
+
                             else
-                                return $ updateCurrentPlayer gs player
+                                sellHouse player house gs
+
+                        else
+                            return $ updateCurrentPlayer gs player
                     else do
                         --Tranforma em função
                         let rent = rentalValue house
@@ -142,6 +150,42 @@ applyHouseEffect gs player house = case houseType house of
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
+houseAuction :: Player -> Board -> IO Board
+houseAuction player board = do
+    let boardTemp = removePlayer board (playerId player)
+    (winnerId, bidValue) <- recursiveAuction (players boardTemp)
+
+    case find (\p -> playerId p == winnerId) (players board) of
+        Nothing -> return board
+
+        Just p1 -> do
+            let payer = takeMoney p1 bidValue
+            let receiver = addMoney player bidValue
+
+            if isBankrupt payer then do
+                printPlayerWentBankrupt $ name payer
+                return $ removePlayer board (playerId payer)
+            else do
+                putStrLn("Vendido para: " ++ name p1)
+                let gs1 = updatePlayerById board payer
+                let gs2 = updatePlayerById gs1 receiver
+                return gs2
+
+
+recursiveAuction :: [Player] -> IO (Int, Int) -- (id, value)
+recursiveAuction [] = return (-1, -1)
+recursiveAuction (a:as) = do
+    putStrLn ("Qual seu lance jogador " ++ name a ++ "?")
+    valueStr <- getLine
+    let value = read valueStr :: Int
+    let idx = playerId a
+
+    (bestId, bestValue) <- recursiveAuction as
+
+    if bestValue == -1 || value > bestValue then
+        return (idx, value)
+    else
+        return (bestId, bestValue)
 
 sellHouse :: Player -> BoardHouse -> Board -> IO Board
 sellHouse player house board = do
