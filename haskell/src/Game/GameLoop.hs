@@ -115,23 +115,7 @@ applyHouseEffect gs player house = case houseType house of
                         else
                             return $ updateCurrentPlayer gs player
                     else do
-                        --Tranforma em função
-                        let rent = rentalValue house
-                        let payer = takeMoney player rent
-                        let receiver = addMoney owner rent
-                        printRentPayment (name payer) rent (name receiver)
-
-                        --Jogador faliu e foi removido
-                        if isBankrupt payer then do
-                            printPlayerWentBankrupt $ name payer
-                            let gs1 = removePlayer gs (playerId payer)
-                            return gs1
-                        else do
-
-                            --atualizao estado do jogo
-                            let gs1 = updatePlayerById gs payer
-                            let gs2 = updatePlayerById gs1 receiver
-                            return gs2
+                        balanceTransfer player owner (rentalValue house) gs
 
         --caso não tenha dono
         else do
@@ -150,6 +134,22 @@ applyHouseEffect gs player house = case houseType house of
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
+balanceTransfer :: Player -> Player -> Int -> Board -> IO Board
+balanceTransfer payer receiver value board = do
+    let payer2 = takeMoney payer value
+    let receiver2 = addMoney receiver value
+    printRentPayment (name payer) value (name receiver)
+
+    if isBankrupt payer2 then do
+        printPlayerWentBankrupt $ name payer2
+        let gs1 = removePlayer board (playerId payer2)
+        return gs1
+    else do
+        let gs1 = updatePlayerById board payer2
+        let gs2 = updatePlayerById gs1 receiver2
+        return gs2
+
+
 houseAuction :: Player -> Board -> IO Board
 houseAuction player board = do
     let boardTemp = removePlayer board (playerId player)
@@ -159,17 +159,9 @@ houseAuction player board = do
         Nothing -> return board
 
         Just p1 -> do
-            let payer = takeMoney p1 bidValue
-            let receiver = addMoney player bidValue
-
-            if isBankrupt payer then do
-                printPlayerWentBankrupt $ name payer
-                return $ removePlayer board (playerId payer)
-            else do
-                putStrLn("Vendido para: " ++ name p1)
-                let gs1 = updatePlayerById board payer
-                let gs2 = updatePlayerById gs1 receiver
-                return gs2
+            putStrLn("Vendido para: " ++ name p1)
+            balanceTransfer p1 player bidValue board
+            
 
 
 recursiveAuction :: [Player] -> IO (Int, Int) -- (id, value)
