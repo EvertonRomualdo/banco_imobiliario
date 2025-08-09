@@ -38,6 +38,46 @@ loopJogo gs = do
         -- Loop recursivo
         loopJogo novoEstado
 
+
+createBot :: Int -> Pl.Player
+createBot pid =
+    Pl.Player
+        { Pl.playerId = pid
+        , Pl.name = botNames !! (pid `mod` length botNames)
+        , Pl.position = 0
+        , Pl.balance = 1000
+        , Pl.blockedShifts = 0
+        , Pl.properties = []
+        , Pl.playerIsBot = True
+        }
+
+botNames :: [String]
+botNames =
+  [ "Bot Dinheirudo"
+  , "Bot Quebrado Mas Feliz"
+  , "Bot Investidor Misterioso"
+  , "Bot Hipotecário"
+  , "Bot Paga-Aluguel"
+  , "Bot Passa-Go"
+  , "Bot Compra-Tudo"
+  , "Bot Corretor Fantasma"
+  , "Bot Inquilino Sofrido"
+  , "Bot Rei dos Dados"
+  , "Bot Fazendeiro Imobiliário"
+  , "Bot Dona Maria dos Aluguéis"
+  , "Bot Esfomeado por Casas"
+  , "Bot Vai à Falência"
+  , "Bot Magnata do Bairro"
+  , "Bot Comprador Compulsivo"
+  , "Bot Prefeito de Tabuleirópolis"
+  , "Bot Que Nunca Paga Imposto"
+  , "Bot Sempre Preso"
+  , "Bot Milionário Misterioso"
+  ]
+
+generateBotsFromIds :: [Int] -> [Pl.Player]
+generateBotsFromIds ids = map createBot ids
+
 menuEntreTurnos :: Pl.Player -> Board -> IO ()
 menuEntreTurnos jogador gs = do
     putStrLn "\n Mais opções:"
