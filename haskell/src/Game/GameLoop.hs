@@ -75,7 +75,6 @@ playTurn gs = do
 rollDice :: IO Int
 rollDice = randomRIO (1, 6)
 
-    -- Aplica o efeito de acordo com o tipo da casa
 applyHouseEffect :: Board -> Player -> BoardHouse -> IO Board
 applyHouseEffect gs player house = case houseType house of
     "Imposto" -> do
@@ -103,30 +102,53 @@ applyHouseEffect gs player house = case houseType house of
                     return $ updateCurrentPlayer gs player
                 Just owner -> do
                     if playerId owner == playerId player then do
+                        -- caiu na própria propriedade
                         putStrLn $ name player ++ " caiu na própria propriedade."
-                        putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
-                        resp <- getLine
-                        case resp of
-                            "v" -> do
-                                putStrLn "Deseja fazer um leilão, vender imediatamente (s/leilao ou n/imediato)?"
-                                resp2 <- getLine
-                                if resp2 == "s"
-                                    then houseAuction player gs
-                                    else sellHouse player house gs
-                            "c" -> do
+                        if playerIsBot player then do
+                            -- decisão automática do bot: vender / construir / continuar
+                            if botSellHouse gs player then
+                                if botAuctionOrImediate gs then
+                                    houseAuction player gs
+                                else
+                                    sellHouse player house gs
+                            else if botBuildCivilHouse gs player then do
                                 gs' <- processConstructionIfAvailable gs player
                                 return gs'
-
-                            _   -> return $ updateCurrentPlayer gs player
-                    else
+                            else
+                                return $ updateCurrentPlayer gs player
+                        else do
+                            -- humano (mantém interação)
+                            putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
+                            resp <- getLine
+                            case resp of
+                                "v" -> do
+                                    putStrLn "Deseja fazer um leilão, vender imediatamente (s/leilao ou n/imediato)?"
+                                    resp2 <- getLine
+                                    if resp2 == "s"
+                                        then houseAuction player gs
+                                        else sellHouse player house gs
+                                "c" -> do
+                                    gs' <- processConstructionIfAvailable gs player
+                                    return gs'
+                                _   -> return $ updateCurrentPlayer gs player
+                    else do
+                        printRentPayment (name player) (rentalValue house) (name owner)
                         balanceTransfer player owner (rentalValue house) gs
         else do
+            -- cidade livre
             putStrLn $ name player ++ " encontrou uma cidade livre!"
-            putStrLn $ "Deseja comprar " ++ houseName house ++ " por R$" ++ show (fixedpurchaseValue house) ++ "? (s/n)"
-            response <- getLine
-            if response == "s"
-                then buyHouseBoard player house gs
-                else return $ updateCurrentPlayer gs player
+            let price = fixedpurchaseValue house
+            if playerIsBot player then do
+                if botBuyHouse gs player price then
+                    buyHouseBoard player house gs
+                else
+                    return $ updateCurrentPlayer gs player
+            else do
+                putStrLn $ "Deseja comprar " ++ houseName house ++ " por R$" ++ show price ++ "? (s/n)"
+                response <- getLine
+                if response == "s"
+                    then buyHouseBoard player house gs
+                    else return $ updateCurrentPlayer gs player
 
     _ -> do
         putStrLn "Casa sem efeito definido."
@@ -137,7 +159,6 @@ balanceTransfer :: Player -> Player -> Int -> Board -> IO Board
 balanceTransfer payer receiver value board = do
     let payer2 = takeMoney payer value
     let receiver2 = addMoney receiver value
-    printRentPayment (name payer) value (name receiver)
 
     if isBankrupt payer2 then do
         printPlayerWentBankrupt $ name payer2
@@ -166,17 +187,20 @@ houseAuction player board = do
 recursiveAuction :: [Player] -> IO (Int, Int) -- (id, value)
 recursiveAuction [] = return (-1, -1)
 recursiveAuction (a:as) = do
-    putStrLn ("Qual seu lance jogador " ++ name a ++ "?")
-    valueStr <- getLine
-    let value = read valueStr :: Int
-    let idx = playerId a
+    value <- if playerIsBot a
+                then return (auctionBid a (a:as)) -- lance do bot
+                else do
+                    putStrLn ("Qual seu lance jogador " ++ name a ++ "?")
+                    valueStr <- getLine
+                    return (read valueStr :: Int)
 
+    let idx = playerId a
     (bestId, bestValue) <- recursiveAuction as
 
-    if bestValue == -1 || value > bestValue then
-        return (idx, value)
-    else
-        return (bestId, bestValue)
+    if bestValue == -1 || value > bestValue
+        then return (idx, value)
+        else return (bestId, bestValue)
+    
 
 sellHouse :: Player -> BoardHouse -> Board -> IO Board
 sellHouse player house board = do
@@ -278,6 +302,17 @@ moreThanHalfwayThere boardHouseList pos =
 wellBelowTheAverageBalance :: Int -> Int -> Bool
 wellBelowTheAverageBalance average bal =
     bal <= div average 2
+
+auctionBid :: Player -> [Player] ->  Int
+auctionBid player playerList = do
+    let averageBalance = calculateAverageBalance playerList (length playerList)
+        playerBalance = balance player
+    if playerBalance > averageBalance then do
+        div (averageBalance * 60) 100
+    else
+        calculateTax player
+
+
 
 thereIsDangerZone :: [Bh.BoardHouse] -> Player -> Bool
 thereIsDangerZone board player =
