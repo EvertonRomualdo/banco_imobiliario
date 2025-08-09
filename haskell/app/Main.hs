@@ -2,6 +2,7 @@ import System.IO (hFlush, stdout)
 import qualified Game.Player as Pl
 import Game.Board
 import  MyLib
+import qualified Game.Ranking
 
 main :: IO ()
 main = do
@@ -19,13 +20,17 @@ menuInicial :: IO ()
 menuInicial = do
     putStrLn "\nMenu:"
     putStrLn "1. Cadastrar jogadores"
-    putStrLn "2. Sair"
+    putStrLn "2. Ver ranking"
+    putStrLn "3. Sair"
     opcao <- prompt "Escolha uma opção: "
     case opcao of
         "1" -> do
             jogadores <- cadastrarJogadores
             iniciarJogo jogadores
-        "2" -> putStrLn "Até logo!"
+        "2" -> do
+            Game.Ranking.mostrarRanking  
+            menuInicial 
+        "3" -> putStrLn "Até logo!"
         _   -> do
             putStrLn "Opção inválida, tente novamente."
             menuInicial
