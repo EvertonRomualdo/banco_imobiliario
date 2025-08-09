@@ -10,7 +10,7 @@ printPrisonHouseType :: String -> IO()
 printPrisonHouseType  playerName = putStrLn(playerName ++ " foi preso por 2 turnos!")
 
 printEspecialHouseType :: String -> IO()
-printEspecialHouseType playerName = putStrLn(playerName ++ "caiu em uma casa especial e vai jogar novamente!")
+printEspecialHouseType playerName = putStrLn(playerName ++ " caiu em uma casa especial e vai jogar novamente!")
 
 exceptionPrintNotFouldOwner :: IO()
 exceptionPrintNotFouldOwner = putStrLn "Erro: proprietário não encontrado."

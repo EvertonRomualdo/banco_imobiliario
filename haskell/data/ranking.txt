@@ -1,0 +1,4 @@
+Nome | Vitorias | Derrotas | Saldo Total | Propriedades
+("Bot Investidor Misterioso",1,2,503,15)
+("kayan",2,0,1784,14)
+("Bartolomeu",1,0,666,3)

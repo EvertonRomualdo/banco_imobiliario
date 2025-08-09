@@ -8,6 +8,8 @@ import Game.Board
 import Data.List (find)
 import Game.Interface
 import Data.List (group)
+import qualified Game.Ranking
+
 
 blockedPlayer :: Player -> Board -> IO Board
 blockedPlayer player gs = do 
@@ -105,7 +107,7 @@ applyHouseEffect gs player house = case houseType house of
                         -- caiu na própria propriedade
                         putStrLn $ name player ++ " caiu na própria propriedade."
                         if playerIsBot player then do
-                            -
+                            
                             if botSellHouse gs player then
                                 if botAuctionOrImediate gs then
                                     houseAuction player gs
@@ -157,18 +159,22 @@ applyHouseEffect gs player house = case houseType house of
 
 balanceTransfer :: Player -> Player -> Int -> Board -> IO Board
 balanceTransfer payer receiver value board = do
-    let payer2 = takeMoney payer value
+    let payer2    = takeMoney payer value
     let receiver2 = addMoney receiver value
 
-    if isBankrupt payer2 then do
+    if isBankrupt payer2
+      then do
         printPlayerWentBankrupt $ name payer2
+        -- registra o derrotado no ranking imediatamente
+        Game.Ranking.salvarDerrotado payer2
+        -- remove o jogador do tabuleiro
         let gs1 = removePlayer board (playerId payer2)
         return gs1
-    else do
+      else do
+        -- aplica o débito e o crédito normalmente
         let gs1 = updatePlayerById board payer2
         let gs2 = updatePlayerById gs1 receiver2
         return gs2
-
 
 houseAuction :: Player -> Board -> IO Board
 houseAuction player board = do
