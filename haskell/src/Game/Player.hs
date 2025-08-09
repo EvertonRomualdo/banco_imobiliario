@@ -7,7 +7,8 @@ module Game.Player where
         position :: Int,
         balance :: Int,
         blockedShifts :: Int,
-        properties :: [Bh.BoardHouse]
+        properties :: [Bh.BoardHouse],
+        playerIsBot :: Bool
         
     } deriving (Show, Read)
 
