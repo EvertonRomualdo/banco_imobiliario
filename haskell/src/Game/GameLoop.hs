@@ -244,25 +244,24 @@ botBuyHouse board player price =
 
 
 botSellHouse :: Board -> Player -> Bool
-botSellHouse board player = 
+botSellHouse board player = do
     let averageBalance = calculateAverageBalance (players board) (length (players board))
-        balancePlayer  = balance player
+        balancePlayer = balance player
     
-    if (wellBelowTheAverageBalance averageBalance balancePlayer) &&
-        (moreThanHalfwayThere (housesOnTheBoard board) (position player)) then
-            True
+    if (wellBelowTheAverageBalance averageBalance balancePlayer) && (moreThanHalfwayThere (housesOnTheBoard board) (position player)) then
+        True
 
     else 
         False
         
 botAuctionOrImediate :: Board -> Bool
 botAuctionOrImediate board = 
-    calculateAverageBalance (players board) (length player) > 650
+    calculateAverageBalance (players board) (length (players board)) > 650
 
 
 botBuildCivilHouse :: Board -> Player ->  Bool
 botBuildCivilHouse board player = 
-    calculateAverageBalance (players board) (length player) >= balance player
+    calculateAverageBalance (players board) (length (players board)) >= balance player
 
 calculateAverageBalance :: [Player] -> Int -> Int
 calculateAverageBalance playerList size =
