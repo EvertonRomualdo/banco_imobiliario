@@ -7,10 +7,8 @@ import Game.BoardHouse
 import Game.Board
 import Data.List (find)
 import Game.Interface
+import Data.List (group)
 
-
---Falta mecanica de ganhar dinheiro quando da uma volta
---Decrementa os turnos bloqueados e retorna o novo board
 blockedPlayer :: Player -> Board -> IO Board
 blockedPlayer player gs = do 
     putStrLn((name player) ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
@@ -236,11 +234,62 @@ calculateTax p = balance p `div` 10
 
 --------------------------------------------------------------------------------------
 
---playBot :: Player -> Board -> Board
---playBot bot board = do 
-    --Calculo se a muitas casas de outros jogadores compradas a frente
-    --Calculo se tenho dinheiro para resistir a passagem
-    --Calculo quanto falta para dar um volta
-    --Decido de forma aleatoria se compro ou não a casa
+botBuyHouse :: Board -> Player -> Int -> Bool
+botBuyHouse board player price =
+    let averageBalance = calculateAverageBalance (players board) (length (players board))
+        balancePlayer  = balance player
+    in  balancePlayer >= price
+        && balancePlayer >= averageBalance
+        && not (thereIsDangerZone (housesOnTheBoard board) player)
 
+
+botSellHouse :: Board -> Player -> Bool
+botSellHouse board player = 
+    let averageBalance = calculateAverageBalance (players board) (length (players board))
+        balancePlayer  = balance player
+    
+    if (wellBelowTheAverageBalance averageBalance balancePlayer) &&
+        (moreThanHalfwayThere (housesOnTheBoard board) (position player)) then
+            True
+
+    else 
+        False
+        
+botAuctionOrImediate :: Board -> Bool
+botAuctionOrImediate board = 
+    calculateAverageBalance (players board) (length player) > 650
+
+
+botBuildCivilHouse :: Board -> Player ->  Bool
+botBuildCivilHouse board player = 
+    calculateAverageBalance (players board) (length player) >= balance player
+
+calculateAverageBalance :: [Player] -> Int -> Int
+calculateAverageBalance playerList size =
+    sumBalance playerList `div` size
+
+sumBalance :: [Player] -> Int
+sumBalance []     = 0
+sumBalance (a:as) = balance a + sumBalance as
+
+moreThanHalfwayThere :: [BoardHouse] -> Int -> Bool
+moreThanHalfwayThere boardHouseList pos =
+    (length boardHouseList - (pos + 1)) > (length boardHouseList `div` 2)
+
+wellBelowTheAverageBalance :: Int -> Int -> Bool
+wellBelowTheAverageBalance average bal =
+    bal <= div average 2
+
+thereIsDangerZone :: [Bh.BoardHouse] -> Player -> Bool
+thereIsDangerZone board player =
+    let startPos   = position player
+        boardSize  = length board
+
+        ownedIds   = map Bh.houseId (properties player)
+
+        nextHouses = [ board !! ((startPos + step) `mod` boardSize) | step <- [1..6] ]
+
+        dangerList = map (\h -> Bh.hasOwner h && Bh.houseId h `notElem` ownedIds) nextHouses
+
+    in  any (>= 4) (map length (filter (\g -> not (null g) && head g) (group dangerList)))
 
