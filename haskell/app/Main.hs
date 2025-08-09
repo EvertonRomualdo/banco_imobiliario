@@ -3,11 +3,6 @@ import qualified Game.Player as Pl
 import Game.Board
 import  MyLib
 
-------------------------------------------------------------------------------
---Codigo quase que completamente de GPT; incofiavel e complexo precisa de ajuste;
-------------------------------------------------------------------------------
-
-
 main :: IO ()
 main = do
     putStrLn "Bem-vindo ao Banco Imobiliário Terminal!"
@@ -63,7 +58,7 @@ criarJogador pid = do
     nome <- prompt $ "Nome do jogador " ++ show pid ++ ": "
     return $ Pl.Player pid nome 0 1000 0 [] False
 
--- Função para criar bots
+
 criarBots :: [Int] -> [Pl.Player]
 criarBots (a:as) = do
     let pl = createBot a 

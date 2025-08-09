@@ -105,7 +105,7 @@ applyHouseEffect gs player house = case houseType house of
                         -- caiu na própria propriedade
                         putStrLn $ name player ++ " caiu na própria propriedade."
                         if playerIsBot player then do
-                            -- decisão automática do bot: vender / construir / continuar
+                            -
                             if botSellHouse gs player then
                                 if botAuctionOrImediate gs then
                                     houseAuction player gs
@@ -117,7 +117,7 @@ applyHouseEffect gs player house = case houseType house of
                             else
                                 return $ updateCurrentPlayer gs player
                         else do
-                            -- humano (mantém interação)
+                    
                             putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
                             resp <- getLine
                             case resp of
@@ -188,7 +188,7 @@ recursiveAuction :: [Player] -> IO (Int, Int) -- (id, value)
 recursiveAuction [] = return (-1, -1)
 recursiveAuction (a:as) = do
     value <- if playerIsBot a
-                then return (auctionBid a (a:as)) -- lance do bot
+                then return (auctionBid a (a:as))
                 else do
                     putStrLn ("Qual seu lance jogador " ++ name a ++ "?")
                     valueStr <- getLine
@@ -221,7 +221,6 @@ buyHouseBoard player house gs = do
         printNoHaveMoney $ name player
         return $ updateCurrentPlayer gs player
 
---Invalido
 buildCivilHouse :: Board -> Player -> Bh.BoardHouse -> IO Board
 buildCivilHouse board player casa
     | Bh.numberCivilHouses casa < 2 = do
