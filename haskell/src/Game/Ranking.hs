@@ -5,7 +5,8 @@ import System.IO (withFile, IOMode(ReadMode), hGetContents)
 import Control.Exception (evaluate)
 import System.Directory (doesFileExist, createDirectoryIfMissing)
 import Data.List (sortBy)
-import Data.Ord  (comparing)
+import Data.List (sortOn)
+import Data.Ord  (Down(..), comparing)
 
 
 strictReadFile :: FilePath -> IO String
@@ -25,6 +26,9 @@ rankingDir  :: FilePath
 rankingDir  = "data"
 rankingFile :: FilePath
 rankingFile = rankingDir ++ "/ranking.txt"
+
+headerLine :: String
+headerLine = "Nome | Vitorias | Derrotas | Saldo Total | Propriedades"
 
 -- Salva o jogador vencedor
 salvarVencedor :: Player -> IO ()
@@ -50,11 +54,9 @@ atualizarEstatisticas p venceu = do
         nova  = gerarLinha p venceu
         atual = atualizarLista nova stats
 
-    -- Escreve o cabeçalho + dados atualizados
-    writeFile rankingFile (unlines (headerLine : map mostrarLinha atual))
-    where
-       headerLine = "Nome | Vitorias | Derrotas | Saldo Total | Propriedades"
-       isHeader cab = cab == headerLine || ("Nome" `elem` words cab)
+        atualOrdenado = sortOn (\(_, vit, _, saldo, props) -> (Down vit, Down saldo, Down props)) atual
+
+    writeFile rankingFile (unlines (headerLine : map mostrarLinha atualOrdenado))
 
 -- Gera a nova linha com os dados atualizados
 gerarLinha :: Player -> Bool -> StatLine
