@@ -45,10 +45,3 @@ module Game.BoardHouse where
 
     resetBoardHouse :: BoardHouse -> BoardHouse
     resetBoardHouse board = board{numberCivilHouses = 0, numberCivilHotels = 0, rentalValue = fixedInitialRentalValue board , hasOwner = False}
-
-    
-
-    
-
-
-    
