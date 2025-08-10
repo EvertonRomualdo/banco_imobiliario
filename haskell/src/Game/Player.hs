@@ -7,7 +7,8 @@ module Game.Player where
         position :: Int,
         balance :: Int,
         blockedShifts :: Int,
-        properties :: [Bh.BoardHouse]
+        properties :: [Bh.BoardHouse],
+        playerIsBot :: Bool
         
     } deriving (Show, Read)
 
@@ -41,4 +42,10 @@ module Game.Player where
             recursiveRemovePropertyById as (l ++ [a]) n 
             
 
-    
+    isBlocked :: Player -> Bool
+    isBlocked p = blockedShifts p > 0
+
+    isBankrupt :: Player -> Bool
+    isBankrupt p = balance p < 0
+
+
