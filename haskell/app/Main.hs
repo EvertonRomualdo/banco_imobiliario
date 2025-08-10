@@ -1,6 +1,7 @@
 import System.IO (hFlush, stdout)
 import qualified Game.Player as Pl
 import Game.Board
+import Game.Interface
 import  MyLib
 import qualified Game.Ranking
 
