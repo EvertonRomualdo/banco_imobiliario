@@ -73,7 +73,7 @@ banco-imobiliario/
 
 ---
 
-##💻 Como Executar
+## 💻 Como Executar
 
 1. **Clone o projeto**
 
