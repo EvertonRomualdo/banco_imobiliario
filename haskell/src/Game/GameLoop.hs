@@ -5,15 +5,14 @@ import System.Random (randomRIO)
 import Game.Player
 import Game.BoardHouse
 import Game.Board
-import Data.List (find)
+import Data.List ( find, group )
 import Game.Interface
-import Data.List (group)
 import qualified Game.Ranking
 
 
 blockedPlayer :: Player -> Board -> IO Board
-blockedPlayer player gs = do 
-    putStrLn((name player) ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
+blockedPlayer player gs = do
+    putStrLn (name player ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
     let updatedPlayer = decrementBlockedShifts player
     return  $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
 
@@ -54,7 +53,7 @@ paySalary movedPlayer oldPlayer maxPosition salary = do
     let newPosition = position movedPlayer
         oldPosition = position oldPlayer
     if newPosition < oldPosition then do
-        putStrLn((name movedPlayer) ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
+        putStrLn (name movedPlayer ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
         return (addMoney movedPlayer salary)
     else
         return movedPlayer
@@ -69,7 +68,7 @@ playTurn gs = do
     --Verifica se o jogador esta preso
     if isBlocked player then do
         blockedPlayer player gs
-        
+
     else do
         movePlayer player gs
 
@@ -107,19 +106,18 @@ applyHouseEffect gs player house = case houseType house of
                         -- caiu na própria propriedade
                         putStrLn $ name player ++ " caiu na própria propriedade."
                         if playerIsBot player then do
-                            
+
                             if botSellHouse gs player then
                                 if botAuctionOrImediate gs then
                                     houseAuction player gs
                                 else
                                     sellHouse player house gs
                             else if botBuildCivilHouse gs player then do
-                                gs' <- processConstructionIfAvailable gs player
-                                return gs'
+                                processConstructionIfAvailable gs player
                             else
                                 return $ updateCurrentPlayer gs player
                         else do
-                    
+
                             putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
                             resp <- getLine
                             case resp of
@@ -130,8 +128,7 @@ applyHouseEffect gs player house = case houseType house of
                                         then houseAuction player gs
                                         else sellHouse player house gs
                                 "c" -> do
-                                    gs' <- processConstructionIfAvailable gs player
-                                    return gs'
+                                    processConstructionIfAvailable gs player
                                 _   -> return $ updateCurrentPlayer gs player
                     else do
                         printRentPayment (name player) (rentalValue house) (name owner)
@@ -185,9 +182,9 @@ houseAuction player board = do
         Nothing -> return board
 
         Just p1 -> do
-            putStrLn("Vendido para: " ++ name p1)
+            putStrLn ("Vendido para: " ++ name p1)
             balanceTransfer p1 player bidValue board
-            
+
 
 
 recursiveAuction :: [Player] -> IO (Int, Int) -- (id, value)
@@ -206,7 +203,7 @@ recursiveAuction (a:as) = do
     if bestValue == -1 || value > bestValue
         then return (idx, value)
         else return (bestId, bestValue)
-    
+
 
 sellHouse :: Player -> BoardHouse -> Board -> IO Board
 sellHouse player house board = do
@@ -214,7 +211,7 @@ sellHouse player house board = do
     let newPlayer = removePropertyById newPlayerBalance (houseId house)
     printSellHouse (name player) (houseName house)
     return $ updateCurrentPlayer board newPlayer
-    
+
 
 buyHouseBoard :: Player -> BoardHouse -> Board -> IO Board
 buyHouseBoard player house gs = do
@@ -258,7 +255,7 @@ buildCivilHouse board player casa
 
 -- Imposto como 10% do saldo atual
 calculateTax :: Player -> Int
-calculateTax p = balance p `div` 10   
+calculateTax p = balance p `div` 10
 
 
 --------------------------------------------------------------------------------------
@@ -276,20 +273,20 @@ botSellHouse :: Board -> Player -> Bool
 botSellHouse board player = do
     let averageBalance = calculateAverageBalance (players board) (length (players board))
         balancePlayer = balance player
-    
+
     if (wellBelowTheAverageBalance averageBalance balancePlayer) && (moreThanHalfwayThere (housesOnTheBoard board) (position player)) then
         True
 
-    else 
+    else
         False
-        
+
 botAuctionOrImediate :: Board -> Bool
-botAuctionOrImediate board = 
+botAuctionOrImediate board =
     calculateAverageBalance (players board) (length (players board)) > 650
 
 
 botBuildCivilHouse :: Board -> Player ->  Bool
-botBuildCivilHouse board player = 
+botBuildCivilHouse board player =
     calculateAverageBalance (players board) (length (players board)) >= balance player
 
 calculateAverageBalance :: [Player] -> Int -> Int
@@ -297,7 +294,7 @@ calculateAverageBalance playerList size =
     sumBalance playerList `div` size
 
 sumBalance :: [Player] -> Int
-sumBalance []     = 0
+sumBalance [] = 0
 sumBalance (a:as) = balance a + sumBalance as
 
 moreThanHalfwayThere :: [BoardHouse] -> Int -> Bool

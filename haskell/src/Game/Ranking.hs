@@ -1,11 +1,10 @@
 module Game.Ranking where
 
-import Game.Player 
+import Game.Player
 import System.IO (withFile, IOMode(ReadMode), hGetContents)
 import Control.Exception (evaluate)
 import System.Directory (doesFileExist, createDirectoryIfMissing)
-import Data.List (sortBy)
-import Data.List (sortOn)
+import Data.List ( sortBy, sortOn )
 import Data.Ord  (Down(..), comparing)
 
 
@@ -19,7 +18,7 @@ strictReadFile fp = do
             _ <- evaluate (length c)
             return c
 
-type StatLine = (String, Int, Int, Int, Int) 
+type StatLine = (String, Int, Int, Int, Int)
 -- (Nome, Vitórias, Derrotas, Saldo Total, Nº de propriedades)
 
 rankingDir  :: FilePath

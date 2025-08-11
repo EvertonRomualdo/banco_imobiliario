@@ -5,10 +5,8 @@ import Game.GameLoop (playTurn)
 import Game.Board
 import Game.Interface (printBoard)
 
-import Game.Player (name, playerId)
 import qualified Game.Player as Pl
 import qualified Game.BoardHouse as Bh
-import qualified Game.Ranking
 
 
 loopJogo :: Board -> IO ()

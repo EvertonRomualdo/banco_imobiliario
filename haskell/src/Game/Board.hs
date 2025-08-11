@@ -1,6 +1,5 @@
 module Game.Board (
     Board(..),
-    housesOnTheBoard,
     tabuleiroInicial,
     gerarCasas, 
     getCurrentPlayer,

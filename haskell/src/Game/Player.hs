@@ -40,6 +40,7 @@ module Game.Player where
             as ++ l
         else
             recursiveRemovePropertyById as (l ++ [a]) n 
+    recursiveRemovePropertyById [] l _ = l
             
 
     isBlocked :: Player -> Bool

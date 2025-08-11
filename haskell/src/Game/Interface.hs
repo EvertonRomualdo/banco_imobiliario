@@ -3,11 +3,6 @@ module Game.Interface where
 import Game.Player
 import Game.Board
 import Game.BoardHouse
-import Data.List
-
-import Game.Player
-import Game.Board
-import Game.BoardHouse
 import Text.Printf (printf)
 
 -- Função principal do tabuleiro
@@ -27,11 +22,11 @@ printBoard board = do
 
     -- imprime linha do topo
     mapM_ putStrLn (mergeHorizontal top)
-    putStr("\n")
+    putStr "\n"
 
     -- imprime laterais
     mapM_ putStrLn (mergeVertical left right)
-    putStr("\n")
+    putStr "\n"
 
     -- imprime linha de baixo
     mapM_ putStrLn (mergeHorizontal bottom)
@@ -40,7 +35,7 @@ printBoard board = do
 renderHouse :: BoardHouse -> [Player] -> [String]
 renderHouse house ps =
     let pid   = printf "%02d" (houseId house)
-        title = houseName house
+        houseTitle = houseName house
         val   = if houseType house == "Cidade"
                    then "$" ++ show (fixedpurchaseValue house)
                    else ""
@@ -51,7 +46,7 @@ renderHouse house ps =
     in [ "+-------------------+ "
        , "| " ++ centerText pid 17 ++ " | "
        , "|-------------------| "
-       , "| " ++ centerText title 17 ++ " | "
+       , "| " ++ centerText houseTitle 17 ++ " | "
        ] ++ map (\pl -> "| " ++ centerText pl 17 ++ " | ") playerLines
        ++ (if val /= "" then ["| " ++ centerText val 17 ++ " | "] else ["|                   | "])
        ++ ["+-------------------+ "]
@@ -66,7 +61,7 @@ centerText str width =
     in replicate left ' ' ++ str ++ replicate right ' '
 
 mergeHorizontal :: [[String]] -> [String]
-mergeHorizontal houses = foldr1 (zipWith (++)) houses
+mergeHorizontal = foldr1 (zipWith (++))
 
 mergeVertical :: [[String]] -> [[String]] -> [String]
 mergeVertical left right =
@@ -82,33 +77,33 @@ concatVert = concat
 
 --aplyHouseEffect
 printTaxHouseType :: String -> Int -> IO()
-printTaxHouseType playerName tax = do putStrLn(playerName ++ " pagou R$" ++ (show tax) ++ " de imposto.")
+printTaxHouseType playerName tax = do putStrLn (playerName ++ " pagou R$" ++ show tax ++ " de imposto.")
 
 printPrisonHouseType :: String -> IO()
-printPrisonHouseType  playerName = putStrLn(playerName ++ " foi preso por 2 turnos!")
+printPrisonHouseType  playerName = putStrLn (playerName ++ " foi preso por 2 turnos!")
 
 printEspecialHouseType :: String -> IO()
-printEspecialHouseType playerName = putStrLn(playerName ++ " caiu em uma casa especial e vai jogar novamente!")
+printEspecialHouseType playerName = putStrLn (playerName ++ " caiu em uma casa especial e vai jogar novamente!")
 
 exceptionPrintNotFouldOwner :: IO()
 exceptionPrintNotFouldOwner = putStrLn "Erro: proprietário não encontrado."
 
 printRentPayment :: String -> Int -> String ->  IO()
-printRentPayment payer rent receiver = putStrLn(payer ++ " pagou R$" ++ (show rent) ++ " de aluguel para " ++ receiver)
+printRentPayment payer rent receiver = putStrLn (payer ++ " pagou R$" ++ show rent ++ " de aluguel para " ++ receiver)
 
 printPlayerWentBankrupt :: String -> IO()
-printPlayerWentBankrupt playerName = putStrLn(playerName ++ " faliu!")
+printPlayerWentBankrupt playerName = putStrLn (playerName ++ " faliu!")
 
 printHousePurchased :: String -> String -> IO()
-printHousePurchased playerName houseName = putStrLn(playerName ++ " comprou " ++ houseName ++ "!")
+printHousePurchased playerName purchasedHouseName = putStrLn (playerName ++ " comprou " ++ purchasedHouseName ++ "!")
 
 printNoHaveMoney :: String -> IO()
-printNoHaveMoney playerName = putStrLn(playerName ++ " não tem dinheiro suficiente.")
+printNoHaveMoney playerName = putStrLn (playerName ++ " não tem dinheiro suficiente.")
 
 -- GameLoop
 
 printPlayerBlocked :: String -> Int -> IO()
-printPlayerBlocked playerName shifts = putStrLn(playerName ++ " está preso por " ++ (show shifts) ++ "turno(s)")
+printPlayerBlocked playerName shifts = putStrLn (playerName ++ " está preso por " ++ show shifts ++ "turno(s)")
 
 printSellHouse :: String -> String -> IO()
-printSellHouse playerName houseName = putStrLn(playerName ++ " vendeu sua propriedade: " ++ houseName)
+printSellHouse playerName soldHouseName = putStrLn (playerName ++ " vendeu sua propriedade: " ++ soldHouseName)
