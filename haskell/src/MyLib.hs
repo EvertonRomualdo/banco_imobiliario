@@ -3,6 +3,7 @@ module MyLib where
 import Game.Ranking (salvarVencedor, salvarDerrotado, mostrarRanking)
 import Game.GameLoop (playTurn)
 import Game.Board
+import Game.Interface (printBoard)
 
 import Game.Player (name, playerId)
 import qualified Game.Player as Pl
@@ -22,6 +23,10 @@ loopJogo gs = do
     
     --Inicia a proxima rodada
     else do
+        --Exibe tabuleiro antes do turno
+        putStrLn "\n--- Tabuleiro ---"
+        printBoard gs
+        putStrLn "----------------------\n"
         --Determina de quem é a vez
         --Deve verificar se o proximo jogador é um bot exibindo um menu diferente
         putStrLn $ "\n Rodada: " ++ show (turnCount gs)
