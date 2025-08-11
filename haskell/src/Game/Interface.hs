@@ -70,10 +70,10 @@ mergeHorizontal houses = foldr1 (zipWith (++)) houses
 
 mergeVertical :: [[String]] -> [[String]] -> [String]
 mergeVertical left right =
-    let spaceBetween = replicate (length (head left)) ' '
+    let spaceBetween = replicate ((21 * 5) + 5) ' '
         leftLines    = concatVert left
         rightLines   = concatVert right
-        diff         = length leftLines - length rightLines
+        diff         = 0
         paddedRight  = replicate diff (replicate (length (head rightLines)) ' ') ++ rightLines
     in zipWith (\l r -> l ++ spaceBetween ++ r) leftLines paddedRight
 
