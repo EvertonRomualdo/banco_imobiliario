@@ -10,12 +10,18 @@ import Game.Interface
 import qualified Game.Ranking
 
 
-blockedPlayer :: Player -> Board -> IO Board
-blockedPlayer player gs = do
-    putStrLn (name player ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
-    let updatedPlayer = decrementBlockedShifts player
-    return  $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
+-- Função principal que roda o turno de um jogador
+playTurn :: Board -> IO Board
+playTurn gs = do
+    let player = getCurrentPlayer gs
+    --Verifica se o jogador esta preso
+    if isBlocked player then do
+        blockedPlayer player gs
 
+    else do
+        movePlayer player gs
+
+--Move o jogador
 movePlayer :: Player -> Board -> IO Board
 movePlayer player gs = do
     dice <- rollDice
@@ -32,50 +38,16 @@ movePlayer player gs = do
             gs1 <- applyHouseEffect gs movedPlayerWithSalary house
             return $ nextPlayer gs1
 
-
-canBuildOnHouse :: Player -> BoardHouse -> Bool
-canBuildOnHouse player house =
-    houseType house == "Cidade"
-    && hasOwner house
-    && any ((== houseId house) . Bh.houseId) (properties player)
-
-
-processConstructionIfAvailable :: Board -> Player -> IO Board
-processConstructionIfAvailable gs player =
-    case getBoardHouseById gs (position player) of
-        Just house | canBuildOnHouse player house -> buildCivilHouse gs player house
-        _ -> return $ updateCurrentPlayer gs player
+--Desbloqueia o jogador
+blockedPlayer :: Player -> Board -> IO Board
+blockedPlayer player gs = do
+    putStrLn (name player ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
+    let updatedPlayer = decrementBlockedShifts player
+    return  $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
 
 
-
-paySalary :: Player -> Player -> Int -> Int -> IO Player
-paySalary movedPlayer oldPlayer maxPosition salary = do
-    let newPosition = position movedPlayer
-        oldPosition = position oldPlayer
-    if newPosition < oldPosition then do
-        putStrLn (name movedPlayer ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
-        return (addMoney movedPlayer salary)
-    else
-        return movedPlayer
-
-
-
-
--- Função principal que roda o turno de um jogador
-playTurn :: Board -> IO Board
-playTurn gs = do
-    let player = getCurrentPlayer gs
-    --Verifica se o jogador esta preso
-    if isBlocked player then do
-        blockedPlayer player gs
-
-    else do
-        movePlayer player gs
-
--- Rola o dado (1 a 6)
-rollDice :: IO Int
-rollDice = randomRIO (1, 6)
-
+--Aplica o efeito de cada casa ao jogador
+--E suas ações estando naquela posição
 applyHouseEffect :: Board -> Player -> BoardHouse -> IO Board
 applyHouseEffect gs player house = case houseType house of
     "Imposto" -> do
@@ -153,7 +125,42 @@ applyHouseEffect gs player house = case houseType house of
         putStrLn "Casa sem efeito definido."
         return $ updateCurrentPlayer gs player
 
+--Paga salario ao jogador
+paySalary :: Player -> Player -> Int -> Int -> IO Player
+paySalary movedPlayer oldPlayer maxPosition salary = do
+    let newPosition = position movedPlayer
+        oldPosition = position oldPlayer
+    if newPosition < oldPosition then do
+        putStrLn (name movedPlayer ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
+        return (addMoney movedPlayer salary)
+    else
+        return movedPlayer
 
+
+--Verifica se o jogador pode construir na casa
+processConstructionIfAvailable :: Board -> Player -> IO Board
+processConstructionIfAvailable gs player =
+    case getBoardHouseById gs (position player) of
+        Just house | canBuildOnHouse player house -> buildCivilHouse gs player house
+        _ -> return $ updateCurrentPlayer gs player
+
+
+
+canBuildOnHouse :: Player -> BoardHouse -> Bool
+canBuildOnHouse player house =
+    houseType house == "Cidade"
+    && hasOwner house
+    && any ((== houseId house) . Bh.houseId) (properties player)
+
+
+
+
+
+-- Rola o dado (1 a 6)
+rollDice :: IO Int
+rollDice = randomRIO (1, 6)
+
+--Faz tranferencia de saldo entre 2 jogadores
 balanceTransfer :: Player -> Player -> Int -> Board -> IO Board
 balanceTransfer payer receiver value board = do
     let payer2    = takeMoney payer value
@@ -173,6 +180,7 @@ balanceTransfer payer receiver value board = do
         let gs2 = updatePlayerById gs1 receiver2
         return gs2
 
+--Faz o leilão de uma casa
 houseAuction :: Player -> Board -> IO Board
 houseAuction player board = do
     let boardTemp = removePlayer board (playerId player)
@@ -204,7 +212,7 @@ recursiveAuction (a:as) = do
         then return (idx, value)
         else return (bestId, bestValue)
 
-
+--Vende uma casa
 sellHouse :: Player -> BoardHouse -> Board -> IO Board
 sellHouse player house board = do
     let newPlayerBalance = addMoney player (fixedSalesValue house)
@@ -212,7 +220,7 @@ sellHouse player house board = do
     printSellHouse (name player) (houseName house)
     return $ updateCurrentPlayer board newPlayer
 
-
+--Compra uma casa
 buyHouseBoard :: Player -> BoardHouse -> Board -> IO Board
 buyHouseBoard player house gs = do
     if balance player >= fixedpurchaseValue house then do
@@ -224,6 +232,7 @@ buyHouseBoard player house gs = do
         printNoHaveMoney $ name player
         return $ updateCurrentPlayer gs player
 
+--Constroi uma casa civil na propriedade do jogador
 buildCivilHouse :: Board -> Player -> Bh.BoardHouse -> IO Board
 buildCivilHouse board player casa
     | Bh.numberCivilHouses casa < 2 = do
@@ -260,6 +269,7 @@ calculateTax p = balance p `div` 10
 
 --------------------------------------------------------------------------------------
 
+--Raciocinio que determina a ação de compra uma casa do bot
 botBuyHouse :: Board -> Player -> Int -> Bool
 botBuyHouse board player price =
     let averageBalance = calculateAverageBalance (players board) (length (players board))
@@ -268,7 +278,7 @@ botBuyHouse board player price =
         && balancePlayer >= averageBalance
         && not (thereIsDangerZone (housesOnTheBoard board) player)
 
-
+--Raciocinio que determina a ação de vender uma casa do bot
 botSellHouse :: Board -> Player -> Bool
 botSellHouse board player = do
     let averageBalance = calculateAverageBalance (players board) (length (players board))
@@ -280,15 +290,17 @@ botSellHouse board player = do
     else
         False
 
+--Determina se o bot deve leiloar ou comprar uma casa imediatamente
 botAuctionOrImediate :: Board -> Bool
 botAuctionOrImediate board =
     calculateAverageBalance (players board) (length (players board)) > 650
 
-
+--Raciocinio que determina a ação de construir uma casa civil do bot
 botBuildCivilHouse :: Board -> Player ->  Bool
 botBuildCivilHouse board player =
     calculateAverageBalance (players board) (length (players board)) >= balance player
 
+--Calcula a media de saldo dos jogadores necessaria para as ações dos bots
 calculateAverageBalance :: [Player] -> Int -> Int
 calculateAverageBalance playerList size =
     sumBalance playerList `div` size
@@ -297,14 +309,17 @@ sumBalance :: [Player] -> Int
 sumBalance [] = 0
 sumBalance (a:as) = balance a + sumBalance as
 
+--Determina se o bot está mais da metade do caminho em direção ao inicio
 moreThanHalfwayThere :: [BoardHouse] -> Int -> Bool
 moreThanHalfwayThere boardHouseList pos =
     (length boardHouseList - (pos + 1)) > (length boardHouseList `div` 2)
 
+--Determina se o bot está bem abaixo da média
 wellBelowTheAverageBalance :: Int -> Int -> Bool
 wellBelowTheAverageBalance average bal =
     bal <= div average 2
 
+--Calcula o lance que o bot dara em uma leilão a depender de outros calculos
 auctionBid :: Player -> [Player] ->  Int
 auctionBid player playerList = do
     let averageBalance = calculateAverageBalance playerList (length playerList)
@@ -315,7 +330,8 @@ auctionBid player playerList = do
         calculateTax player
 
 
-
+--Verifica se o caminho no raio de 6 casas da posição do bot é perigoso
+--Com base na presença de propriedades adversárias
 thereIsDangerZone :: [Bh.BoardHouse] -> Player -> Bool
 thereIsDangerZone board player =
     let startPos   = position player

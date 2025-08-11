@@ -75,6 +75,8 @@ mergeVertical left right =
 concatVert :: [[String]] -> [String]
 concatVert = concat
 
+--Prints de jogo
+
 --aplyHouseEffect
 printTaxHouseType :: String -> Int -> IO()
 printTaxHouseType playerName tax = do putStrLn (playerName ++ " pagou R$" ++ show tax ++ " de imposto.")
