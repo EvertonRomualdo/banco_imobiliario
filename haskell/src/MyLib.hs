@@ -1,6 +1,6 @@
 module MyLib where
 
-import Game.Ranking (salvarVencedor, salvarDerrotado, mostrarRanking)
+import Game.Ranking (saveWinner, saveLoser, showRanking)
 import Game.GameLoop (playTurn)
 import Game.Board
 import Game.Interface (printBoard)
@@ -8,38 +8,35 @@ import Game.Interface (printBoard)
 import qualified Game.Player as Pl
 import qualified Game.BoardHouse as Bh
 
+gameLoop :: Board -> IO ()
+gameLoop gs = do
 
-loopJogo :: Board -> IO ()
-loopJogo gs = do
-
-    --Verifica se ha um vencedor
+    -- Verifica se há um vencedor
     if length (players gs) <= 1 then do
-        let vencedor = head (players gs)
-        putStrLn $ "\n " ++ Pl.name vencedor ++ " venceu o jogo!"
-        Game.Ranking.salvarVencedor vencedor
-        mapM_ Game.Ranking.salvarDerrotado (filter ((/= Pl.playerId vencedor) . Pl.playerId) (players gs))
-    
-    --Inicia a proxima rodada
+        let winner = head (players gs)
+        putStrLn $ "\n " ++ Pl.name winner ++ " venceu o jogo!"
+        Game.Ranking.saveWinner winner
+        mapM_ Game.Ranking.saveLoser (filter ((/= Pl.playerId winner) . Pl.playerId) (players gs))
+
+    -- Inicia a próxima rodada
     else do
-        --Exibe tabuleiro antes do turno
+        -- Exibe tabuleiro antes do turno
         putStrLn "\n--- Tabuleiro ---"
         printBoard gs
         putStrLn "----------------------\n"
-        --Determina de quem é a vez
+        -- Determina de quem é a vez
         putStrLn $ "\n Rodada: " ++ show (turnCount gs)
-        let jogadorAtual = getCurrentPlayer gs
-        putStrLn $ " Vez de: " ++ Pl.name jogadorAtual
+        let currentPlayer = getCurrentPlayer gs
+        putStrLn $ " Vez de: " ++ Pl.name currentPlayer
 
         -- Oferece o menu de informações
-        menuEntreTurnos jogadorAtual gs
-
+        betweenTurnsMenu currentPlayer gs
 
         -- Executa o turno
-        novoEstado <- playTurn gs
+        newState <- playTurn gs
 
         -- Loop recursivo
-        loopJogo novoEstado
-
+        gameLoop newState
 
 createBot :: Int -> Pl.Player
 createBot pid =
@@ -80,8 +77,8 @@ botNames =
 generateBotsFromIds :: [Int] -> [Pl.Player]
 generateBotsFromIds ids = map createBot ids
 
-menuEntreTurnos :: Pl.Player -> Board -> IO ()
-menuEntreTurnos jogador gs = do
+betweenTurnsMenu :: Pl.Player -> Board -> IO ()
+betweenTurnsMenu player gs = do
     putStrLn "\n Mais opções:"
     putStrLn "1. Continuar"
     putStrLn "2. Ver saldo"
@@ -90,38 +87,37 @@ menuEntreTurnos jogador gs = do
     putStrLn "5. Ver rodada atual"
     putStrLn "6. Ver tudo"
     putStrLn "Escolha uma opção (ou ENTER para continuar): "
-    opcao <- getLine
-    case opcao of
+    option <- getLine
+    case option of
         ""  -> return ()
         "1" -> return ()
         "2" -> do
-            putStrLn $ " Saldo: R$" ++ show (Pl.balance jogador)
-            menuEntreTurnos jogador gs
+            putStrLn $ " Saldo: R$" ++ show (Pl.balance player)
+            betweenTurnsMenu player gs
         "3" -> do
             putStrLn " Propriedades:"
-            if null (Pl.properties jogador)
+            if null (Pl.properties player)
                 then putStrLn "  (nenhuma)"
-                else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties jogador)
-            menuEntreTurnos jogador gs
+                else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties player)
+            betweenTurnsMenu player gs
         "4" -> do
-            putStrLn $ " Posição atual: " ++ show (Pl.position jogador)
-            menuEntreTurnos jogador gs
+            putStrLn $ " Posição atual: " ++ show (Pl.position player)
+            betweenTurnsMenu player gs
         "5" -> do
             putStrLn $ " Rodada atual: " ++ show (turnCount gs)
-            menuEntreTurnos jogador gs
+            betweenTurnsMenu player gs
         "6" -> do
-            putStrLn $ " Saldo: R$" ++ show (Pl.balance jogador)
-            putStrLn $ " Posição: " ++ show (Pl.position jogador)
+            putStrLn $ " Saldo: R$" ++ show (Pl.balance player)
+            putStrLn $ " Posição: " ++ show (Pl.position player)
             putStrLn $ " Rodada: " ++ show (turnCount gs)
             putStrLn " Propriedades:"
-            if null (Pl.properties jogador)
+            if null (Pl.properties player)
                 then putStrLn "  (nenhuma)"
-                else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties jogador)
-            menuEntreTurnos jogador gs
+                else mapM_ (\p -> putStrLn $ " - " ++ Bh.houseName p) (Pl.properties player)
+            betweenTurnsMenu player gs
         _   -> do
             putStrLn " Opção inválida."
-            menuEntreTurnos jogador gs
-
+            betweenTurnsMenu player gs
 
 
 

@@ -19,7 +19,7 @@ strictReadFile fp = do
             return c
 
 type StatLine = (String, Int, Int, Int, Int)
--- (Nome, Vitórias, Derrotas, Saldo Total, Nº de propriedades)
+-- (Name, Wins, Losses, Total Balance, Number of properties)
 
 rankingDir  :: FilePath
 rankingDir  = "data"
@@ -29,82 +29,82 @@ rankingFile = rankingDir ++ "/ranking.txt"
 headerLine :: String
 headerLine = "Nome | Vitorias | Derrotas | Saldo Total | Propriedades"
 
--- Salva o jogador vencedor
-salvarVencedor :: Player -> IO ()
-salvarVencedor jogador = atualizarEstatisticas jogador True
+-- Save the winning player
+saveWinner :: Player -> IO ()
+saveWinner player = updateStats player True
 
--- Salva os jogadores derrotados
-salvarDerrotado :: Player -> IO ()
-salvarDerrotado jogador = atualizarEstatisticas jogador False
+-- Save the losing players
+saveLoser :: Player -> IO ()
+saveLoser player = updateStats player False
 
--- Atualiza ou insere estatísticas no ranking
-atualizarEstatisticas :: Player -> Bool -> IO ()
-atualizarEstatisticas p venceu = do
+-- Update or insert statistics in ranking
+updateStats :: Player -> Bool -> IO ()
+updateStats p won = do
     createDirectoryIfMissing True rankingDir
-    conteudo <- strictReadFile rankingFile
-    let linhas = lines conteudo
+    content <- strictReadFile rankingFile
+    let linesList = lines content
 
-        dadosAntigos =
-          case linhas of
+        oldData =
+          case linesList of
             (cab:rest) | cab == headerLine -> rest
-            _                              -> linhas
+            _                              -> linesList
 
-        stats = map lerLinhaSegura dadosAntigos
-        nova  = gerarLinha p venceu
-        atual = atualizarLista nova stats
+        stats = map safeReadLine oldData
+        newLine  = generateLine p won
+        updated  = updateList newLine stats
 
-        atualOrdenado = sortOn (\(_, vit, _, saldo, props) -> (Down vit, Down saldo, Down props)) atual
+        updatedSorted = sortOn (\(_, vit, _, saldo, props) -> (Down vit, Down saldo, Down props)) updated
 
-    writeFile rankingFile (unlines (headerLine : map mostrarLinha atualOrdenado))
+    writeFile rankingFile (unlines (headerLine : map showLine updatedSorted))
 
--- Gera a nova linha com os dados atualizados
-gerarLinha :: Player -> Bool -> StatLine
-gerarLinha p venceu =
-    let nome = name p
-        vit = if venceu then 1 else 0
-        der = if venceu then 0 else 1
-        saldo = balance p
+-- Generate the new line with updated data
+generateLine :: Player -> Bool -> StatLine
+generateLine p won =
+    let playerName = name p
+        wins = if won then 1 else 0
+        losses = if won then 0 else 1
+        balanceValue = balance p
         props = length (properties p)
-    in (nome, vit, der, saldo, props)
+    in (playerName, wins, losses, balanceValue, props)
 
--- Atualiza a linha existente ou insere nova
-atualizarLista :: StatLine -> [StatLine] -> [StatLine]
-atualizarLista nova [] = [nova]
-atualizarLista nova@(nome, vit, der, saldo, props) ((n, v, d, s, p) : xs)
-  | nome == n = (n, v + vit, d + der, s + saldo, p + props) : xs
-  | otherwise = (n, v, d, s, p) : atualizarLista nova xs
+-- Update the existing line or insert a new one
+updateList :: StatLine -> [StatLine] -> [StatLine]
+updateList new [] = [new]
+updateList new@(playerName, wins, losses, balanceValue, props) ((n, v, d, s, p) : xs)
+  | playerName == n = (n, v + wins, d + losses, s + balanceValue, p + props) : xs
+  | otherwise       = (n, v, d, s, p) : updateList new xs
 
--- Converte linha do arquivo para tupla
-lerLinhaSegura :: String -> StatLine
-lerLinhaSegura linha =
-    case reads linha of
+-- Convert file line to tuple
+safeReadLine :: String -> StatLine
+safeReadLine line =
+    case reads line of
     [(t, "")] -> t
     _         -> ("<corrompido>", 0, 0, 0, 0)
 
--- Converte tupla para String
-mostrarLinha :: StatLine -> String
-mostrarLinha = show
+-- Convert tuple to String
+showLine :: StatLine -> String
+showLine = show
 
--- Exibe ranking no terminal
-mostrarRanking :: IO ()
-mostrarRanking = do
-  existe <- doesFileExist rankingFile
-  if not existe
+-- Show ranking in terminal
+showRanking :: IO ()
+showRanking = do
+  exists <- doesFileExist rankingFile
+  if not exists
     then putStrLn "Ranking ainda não existe."
     else do
-      conteudo <- strictReadFile rankingFile
-      let linhas = lines conteudo
-          semCab = case linhas of
-                     (cab:rest) | "Nome" `elem` words cab -> rest
-                     _                                   -> linhas
-          stats = map lerLinhaSegura semCab
-          ordenado = sortBy (flip (comparing (\(_, vit, _, _, _) -> vit))) stats
+      content <- strictReadFile rankingFile
+      let linesList = lines content
+          withoutHeader = case linesList of
+                             (cab:rest) | "Nome" `elem` words cab -> rest
+                             _                                   -> linesList
+          stats = map safeReadLine withoutHeader
+          sorted = sortBy (flip (comparing (\(_, vit, _, _, _) -> vit))) stats
       putStrLn "\nRANKING DE JOGADORES:"
       putStrLn "Jogador | Vitórias | Derrotas | Saldo Total | Propriedades"
-      mapM_ imprimir ordenado
+      mapM_ printLine sorted
   putStrLn "\nPressione Enter para voltar ao menu..."
   _ <- getLine
   return ()
   where
-    imprimir (n, v, d, s, p) =
+    printLine (n, v, d, s, p) =
       putStrLn $ n ++ " | " ++ show v ++ " | " ++ show d ++ " | R$" ++ show s ++ " | " ++ show p

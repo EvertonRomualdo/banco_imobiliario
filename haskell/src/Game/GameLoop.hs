@@ -170,7 +170,7 @@ balanceTransfer payer receiver value board = do
       then do
         printPlayerWentBankrupt $ name payer2
         -- registra o derrotado no ranking imediatamente
-        Game.Ranking.salvarDerrotado payer2
+        Game.Ranking.saveLoser payer2
         -- remove o jogador do tabuleiro
         let gs1 = removePlayer board (playerId payer2)
         return gs1
