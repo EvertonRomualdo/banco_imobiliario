@@ -1,5 +1,7 @@
 module MyLib where
 
+import System.Info (os)
+import System.Process (system)
 import Game.Ranking (saveWinner, saveLoser, showRanking)
 import Game.GameLoop (playTurn)
 import Game.Board
@@ -11,6 +13,7 @@ import qualified Game.BoardHouse as Bh
 gameLoop :: Board -> IO ()
 gameLoop gs = do
 
+    clear
     -- Verifica se há um vencedor
     if length (players gs) <= 1 then do
         let winner = head (players gs)
@@ -121,3 +124,8 @@ betweenTurnsMenu player gs = do
 
 
 
+clear :: IO ()
+clear =
+    if os == "mingw32"  -- Windows
+        then system "cls" >> return ()
+        else system "clear" >> return ()
