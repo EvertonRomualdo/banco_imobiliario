@@ -102,10 +102,54 @@ printHousePurchased playerName purchasedHouseName = putStrLn (playerName ++ " co
 printNoHaveMoney :: String -> IO()
 printNoHaveMoney playerName = putStrLn (playerName ++ " não tem dinheiro suficiente.")
 
+printSelfHouse :: String -> IO()
+printSelfHouse playerName = putStrLn (playerName ++ " caiu na sua própria propriedade.")
+
+
+printWantToAuction :: String -> IO()
+printWantToAuction playerName = putStrLn (playerName ++ "Deseja fazer um leilão, vender imediatamente (s/leilao ou n/imediato)?")
+
+printWantToSellHouse :: String -> IO()
+printWantToSellHouse playerName  = putStrLn (playerName ++ "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)")
+
+printFreeHouse :: String -> IO()
+printFreeHouse playerName = putStrLn (playerName ++ " encontrou uma cidade livre!")
+
+printWantToBuyHouse :: String -> Int -> IO()
+printWantToBuyHouse house housePrice = putStrLn ("Deseja comprar " ++ house ++ " por R$" ++ show housePrice ++ "? (s/n)")
+
+printGetSalary :: String -> Int -> IO()
+printGetSalary playerName salary = putStrLn (playerName ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
+
 -- GameLoop
+
+printMovedPlayer :: String -> Int -> Int -> IO()
+printMovedPlayer playerName x y = putStrLn (playerName ++ " rolou " ++ show x ++ " e foi para a posição " ++ show y)
+
+printAuctionBid :: String -> IO()
+printAuctionBid playerName = putStrLn ("Qual seu lance jogador " ++ playerName ++ "?")
+
+printSoldTo :: String -> IO()
+printSoldTo playerName = putStrLn ("Vendido para: " ++ playerName)
 
 printPlayerBlocked :: String -> Int -> IO()
 printPlayerBlocked playerName shifts = putStrLn (playerName ++ " está preso por " ++ show shifts ++ "turno(s)")
+
+printInsufficientBalanceHouse :: IO ()
+printInsufficientBalanceHouse = putStrLn " Saldo insuficiente para construir uma casa."
+
+printHouseBuiltSuccess :: IO ()
+printHouseBuiltSuccess = putStrLn " Casa construída com sucesso!"
+
+printInsufficientBalanceHotel :: IO ()
+printInsufficientBalanceHotel = putStrLn " Saldo insuficiente para construir um hotel."
+
+printHotelBuiltSuccess :: IO ()
+printHotelBuiltSuccess = putStrLn " Hotel construído com sucesso!"
+
+printMaxConstructionReached :: IO ()
+printMaxConstructionReached = putStrLn " Esta propriedade já atingiu o limite máximo de construções."
+
 
 printSellHouse :: String -> String -> IO()
 printSellHouse playerName soldHouseName = putStrLn (playerName ++ " vendeu sua propriedade: " ++ soldHouseName)

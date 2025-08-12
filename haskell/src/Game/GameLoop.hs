@@ -26,7 +26,7 @@ movePlayer :: Player -> Board -> IO Board
 movePlayer player gs = do
     dice <- rollDice
     let movedPlayer = advancePosition player dice (maxPosition gs)
-    putStrLn $ name movedPlayer ++ " rolou " ++ show dice ++ " e foi para a posição " ++ show (position movedPlayer)
+    printMovedPlayer (name movedPlayer) dice (position movedPlayer)
     movedPlayerWithSalary <- paySalary movedPlayer player (maxPosition gs) (balancePerShift gs)
 
     case getBoardHouseById gs (position movedPlayerWithSalary) of
@@ -41,7 +41,7 @@ movePlayer player gs = do
 --Desbloqueia o jogador
 blockedPlayer :: Player -> Board -> IO Board
 blockedPlayer player gs = do
-    putStrLn (name player ++ " está preso por " ++ show (blockedShifts player) ++ " turno(s).")
+    printPlayerBlocked (name player) (blockedShifts player)
     let updatedPlayer = decrementBlockedShifts player
     return  $ nextPlayer $ updateCurrentPlayer gs updatedPlayer
 
@@ -76,7 +76,7 @@ applyHouseEffect gs player house = case houseType house of
                 Just owner -> do
                     if playerId owner == playerId player then do
                         -- caiu na própria propriedade
-                        putStrLn $ name player ++ " caiu na própria propriedade."
+                        printSelfHouse (name player)
                         if playerIsBot player then do
 
                             if botSellHouse gs player then
@@ -90,11 +90,11 @@ applyHouseEffect gs player house = case houseType house of
                                 return $ updateCurrentPlayer gs player
                         else do
 
-                            putStrLn "Deseja vender esta propriedade, construir uma nova casa ou continuar? (v/c/enter)"
+                            printWantToSellHouse (name player)
                             resp <- getLine
                             case resp of
                                 "v" -> do
-                                    putStrLn "Deseja fazer um leilão, vender imediatamente (s/leilao ou n/imediato)?"
+                                    printWantToAuction (name player)
                                     resp2 <- getLine
                                     if resp2 == "s"
                                         then houseAuction player gs
@@ -107,7 +107,7 @@ applyHouseEffect gs player house = case houseType house of
                         balanceTransfer player owner (rentalValue house) gs
         else do
             -- cidade livre
-            putStrLn $ name player ++ " encontrou uma cidade livre!"
+            printFreeHouse (name player)
             let price = fixedpurchaseValue house
             if playerIsBot player then do
                 if botBuyHouse gs player price then
@@ -115,7 +115,7 @@ applyHouseEffect gs player house = case houseType house of
                 else
                     return $ updateCurrentPlayer gs player
             else do
-                putStrLn $ "Deseja comprar " ++ houseName house ++ " por R$" ++ show price ++ "? (s/n)"
+                printWantToBuyHouse (houseName house) (fixedpurchaseValue house)
                 response <- getLine
                 if response == "s"
                     then buyHouseBoard player house gs
@@ -131,7 +131,7 @@ paySalary movedPlayer oldPlayer maxPosition salary = do
     let newPosition = position movedPlayer
         oldPosition = position oldPlayer
     if newPosition < oldPosition then do
-        putStrLn (name movedPlayer ++ " Deu uma volta e recebeu R$"  ++ show salary ++ " de salário")
+        printGetSalary (name movedPlayer) salary
         return (addMoney movedPlayer salary)
     else
         return movedPlayer
@@ -190,7 +190,7 @@ houseAuction player board = do
         Nothing -> return board
 
         Just p1 -> do
-            putStrLn ("Vendido para: " ++ name p1)
+            printSoldTo (name p1)
             balanceTransfer p1 player bidValue board
 
 
@@ -201,7 +201,7 @@ recursiveAuction (a:as) = do
     value <- if playerIsBot a
                 then return (auctionBid a (a:as))
                 else do
-                    putStrLn ("Qual seu lance jogador " ++ name a ++ "?")
+                    printAuctionBid (name a)
                     valueStr <- getLine
                     return (read valueStr :: Int)
 
@@ -238,27 +238,27 @@ buildCivilHouse board player casa
     | Bh.numberCivilHouses casa < 2 = do
         let cost = Bh.fixedCivilHouseValue casa
         if balance player < cost then do
-            putStrLn " Saldo insuficiente para construir uma casa."
+            printInsufficientBalanceHouse
             return board
         else do
             let newHouse = Bh.incrementNumberCivilHouses casa
             let newPlayer = addProperty (removePropertyById (takeMoney player cost) (Bh.houseId casa)) newHouse
-            putStrLn " Casa construída com sucesso!"
+            printHouseBuiltSuccess
             return $ updatePlayerById (updateBoardHouse board newHouse) newPlayer
 
     | Bh.numberCivilHotels casa < 2 = do
         let cost = Bh.fixedCivilHotelValue casa
         if balance player < cost then do
-            putStrLn " Saldo insuficiente para construir um hotel."
+            printInsufficientBalanceHotel
             return board
         else do
             let newHouse = Bh.incrementNumberCivilHotels casa
             let newPlayer = addProperty (removePropertyById (takeMoney player cost) (Bh.houseId casa)) newHouse
-            putStrLn " Hotel construído com sucesso!"
+            printHotelBuiltSuccess
             return $ updatePlayerById (updateBoardHouse board newHouse) newPlayer
 
     | otherwise = do
-        putStrLn " Esta propriedade já atingiu o limite máximo de construções."
+        printMaxConstructionReached
         return board
 
 
