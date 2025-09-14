@@ -1,38 +1,45 @@
 :- encoding(utf8).
 :- module(game, [
-    init_game_state/2,
+    start_new_game/0,
     game_loop/1
 ]).
+
 :- use_module(board).
 :- use_module(player).
 :- use_module(actions).
 :- use_module(ui).
 :- use_module(ranking).
 
-% init_game_state(+Players, -State)
-init_game_state(Players, state(Board, Players, 1)) :-
-    board:initial_board(Board).
+% GameState: state(Board, Players, TurnNumber)
 
-% game_loop(+State)
+start_new_game :-
+    board:initial_board(Board),
+    player:register_players(Players),
+    GameState = state(Board, Players, 1),
+    game_loop(GameState).
+
+% Loop principal do jogo
 game_loop(state(Board, Players, Turn)) :-
     length(Players, N),
     ( N =< 1 ->
         ( Players = [Winner] ->
             ui:print_message("Jogo terminou! Vencedor:"),
-            ui:print_message(Winner),
-            ranking:update_ranking(Winner, Players)
+            Winner = player(_,Name,_,_,_),
+            format("~w venceu a partida!~n", [Name]),
+            ranking:update_stats(Name, win),
+            update_losers_stats(Players, Name),
+            !
         ;
-            ui:print_message("Jogo terminou.")
+            ui:print_message("Jogo terminou sem vencedor.")
         )
     ;
-        actions:take_turn(Players, Turn, Board, NewPlayers, NewBoard),
-        next_turn_after_update(NewPlayers, Turn, NextTurn),
+        Index is ((Turn - 1) mod N) + 1,
+        actions:take_turn(Players, Index, Board, NewPlayers, NewBoard),
+        NextTurn is Turn + 1,
         game_loop(state(NewBoard, NewPlayers, NextTurn))
     ).
 
-next_turn_after_update(Players, CurrTurn, NextTurn) :-
-    length(Players, L),
-    ( L = 0 -> NextTurn = 1
-    ; Next0 is CurrTurn + 1,
-      ( Next0 =< L -> NextTurn = Next0 ; NextTurn = 1 )
-    ).
+% Atualiza derrotas de todos os que não venceram
+update_losers_stats([], _).
+update_losers_stats([player(_,Name,_,_,_)], WinnerName) :-
+    ( Name \== WinnerName -> ranking:update_stats(Name, loss) ; true ).

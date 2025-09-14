@@ -1,83 +1,42 @@
 :- encoding(utf8).
 :- module(ranking, [
-    update_ranking/2,
-    show_ranking/0
+    show_ranking/0,
+    update_stats/2
 ]).
 
-:- use_module(library(lists)).
+:- use_module(library(readutil)).
 
-ranking_file("ranking.txt").
+ranking_file("prolog/data/ranking.txt").
 
-% Atualiza estatísticas após fim do jogo
-% +Winner (player), +AllPlayers
-update_ranking(Winner, Players) :-
-    Winner = player(_, WinnerName, _, _, _),
-    findall(Name,
-        ( member(player(_, Name, _, _, _), Players), Name \== WinnerName ),
-        Losers),
-    load_ranking(Current),
-    update_winner(WinnerName, Current, Updated1),
-    update_losers(Losers, Updated1, UpdatedFinal),
-    save_ranking(UpdatedFinal).
-
-update_winner(Name, Ranking, Updated) :-
-    ( select(entry(Name, W, L), Ranking, Rest) ->
-        W1 is W + 1,
-        Updated = [entry(Name, W1, L) | Rest]
-    ;
-        Updated = [entry(Name, 1, 0) | Ranking]
-    ).
-
-update_losers([], R, R).
-update_losers([Name|Rest], Ranking, Updated) :-
-    ( select(entry(Name, W, L), Ranking, Temp) ->
-        L1 is L + 1,
-        NewR = [entry(Name, W, L1) | Temp]
-    ;
-        NewR = [entry(Name, 0, 1) | Ranking]
-    ),
-    update_losers(Rest, NewR, Updated).
-
-% Carrega ranking de arquivo
-load_ranking(Ranking) :-
+% Mostra ranking
+show_ranking :-
     ranking_file(File),
     ( exists_file(File) ->
-        open(File, read, Stream),
-        read_lines(Stream, Lines),
-        close(Stream),
-        maplist(parse_entry, Lines, Ranking)
-    ;
-        Ranking = []
+        writeln("--- Ranking de Jogadores ---"),
+        read_file_to_string(File, Content, []),
+        writeln(Content)
+    ; writeln("Nenhum ranking disponível ainda.")
     ).
 
-read_lines(Stream, []) :-
-    at_end_of_stream(Stream).
-read_lines(Stream, [Line|Rest]) :-
-    \+ at_end_of_stream(Stream),
-    read_line_to_string(Stream, Line),
-    read_lines(Stream, Rest).
-
-parse_entry(Line, entry(Name, W, L)) :-
-    split_string(Line, " ", "", [NameS, WS, LS]),
-    atom_string(Name, NameS),
-    number_string(W, WS),
-    number_string(L, LS).
-
-% Salva ranking em arquivo
-save_ranking(Ranking) :-
+% Atualiza estatísticas
+update_stats(Name, Result) :-
     ranking_file(File),
-    open(File, write, Stream),
-    forall(member(entry(Name, W, L), Ranking),
-        format(Stream, "~w ~w ~w~n", [Name, W, L])),
-    close(Stream).
+    ( exists_file(File) ->
+        read_file_to_terms(File, Terms, [])
+    ; Terms = []
+    ),
+    update_player_stats(Terms, Name, Result, NewTerms),
+    open(File, write, Out),
+    forall(member(stat(N,V,D), NewTerms),
+           format(Out, "~w ~w ~w~n", [N,V,D])),
+    close(Out).
 
-% Exibe ranking
-show_ranking :-
-    load_ranking(Ranking),
-    ( Ranking = [] ->
-        writeln("Nenhum histórico disponível.")
-    ;
-        writeln("=== Ranking de Jogadores ==="),
-        forall(member(entry(Name, W, L), Ranking),
-            format("~w - Vitórias: ~w | Derrotas: ~w~n", [Name, W, L]))
-    ).
+% Atualiza estatísticas de um jogador
+update_player_stats([], Name, Result, [stat(Name,NewV,NewD)]) :-
+    ( Result = win -> NewV = 1, NewD = 0
+    ; Result = loss -> NewV = 0, NewD = 1 ).
+update_player_stats([stat(Name,V,D)|Rest], Name, Result, [stat(Name,V1,D1)|Rest]) :-
+    ( Result = win -> V1 is V+1, D1 = D
+    ; Result = loss -> D1 is D+1, V1 = V ).
+update_player_stats([H|Rest], Name, Result, [H|NewRest]) :-
+    update_player_stats(Rest, Name, Result, NewRest).
