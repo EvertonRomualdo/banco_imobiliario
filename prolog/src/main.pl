@@ -3,6 +3,6 @@
 :- use_module(game).
 
 start_game :-
-    write('Bem-vindo ao Banco Imobiliário (Prolog)!'), nl,
+    writeln('Bem-vindo ao Banco Imobiliário (Prolog)!'),
     game:init_game_state(GameState),
     game:game_loop(GameState).

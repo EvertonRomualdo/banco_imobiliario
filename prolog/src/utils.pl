@@ -6,11 +6,9 @@
 
 :- use_module(library(random)).
 
-% roll_dice(-N)
 roll_dice(N) :-
     random_between(1, 6, N).
 
-% replace_nth0(+List, +Index0, +NewElem, -NewList)
 replace_nth0([_|T], 0, X, [X|T]).
 replace_nth0([H|T], I, X, [H|R]) :-
     I > 0,
