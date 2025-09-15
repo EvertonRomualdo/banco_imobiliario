@@ -26,7 +26,7 @@ register_loop(0, _, Acc, Players) :- reverse(Acc, Players).
 register_loop(N, Id, Acc, Players) :-
     format("Digite o nome do jogador ~w: ", [Id]),
     read_line_to_string(user_input, Name),
-    Player = player(Id, Name, 0, 500, 0),
+    Player = player(Id, Name, 0, -1, 0),
     N1 is N - 1,
     Id1 is Id + 1,
     register_loop(N1, Id1, [Player|Acc], Players).

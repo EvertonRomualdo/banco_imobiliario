@@ -79,7 +79,7 @@ take_turn(Players, TurnIndex, Board, NewPlayers, NewBoard) :-
 % ============================
 % Ações ao cair em uma casa
 % ============================
-handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
+handle_landing(PlayerMoved, Players, _, Board, PlayersOut, BoardOut) :-
     PlayerMoved = player(Pid,Name,Pos,Bal,Blk),
     ( board:get_house_by_pos(Board, Pos, House) ->
         House = house(Hid,HName,HType,Price,Rent,Owner,Inc),
@@ -87,19 +87,21 @@ handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
             Tax = 50,
             player:pay(PlayerMoved, Tax, PAfter),
             format("~w pagou imposto de R$~w.~n", [Name, Tax]),
-            update_player_in_list(Players, PAfter, PlayersOut),
-            BoardOut = Board
+            % verifica falência
+            ( player:is_bankrupt(PAfter) ->
+                ui:print_bankrupt(PAfter),
+                remove_player_by_id(Players, Pid, PlayersOut),
+                BoardOut = Board
+            ;
+                update_player_in_list(Players, PAfter, PlayersOut),
+                BoardOut = Board
+            )
 
         ; HType = prison ->
             P2 = player(Pid,Name,Pos,Bal,2),
             update_player_in_list(Players, P2, PlayersOut),
             BoardOut = Board,
             writeln("Você foi para a prisão por 2 turnos!")
-
-        ; HType = special ->
-            format("Casa especial! Você joga novamente!~n"),
-            update_player_in_list(Players, PlayerMoved, PlayersTemp),
-            take_turn(PlayersTemp, TurnIndex, Board, PlayersOut, BoardOut)
 
         ; HType = city ->
             ( Owner = none ->
@@ -109,11 +111,17 @@ handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
                 ( Resp = yes ->
                     ( Bal >= Price ->
                         player:pay(PlayerMoved, Price, BoughtPlayer),
-                        NewHouse = house(Hid,HName,HType,Price,Rent,Pid,Inc),
-                        board:update_house_in_board(Board, NewHouse, Board1),
-                        update_player_in_list(Players, BoughtPlayer, Players1),
-                        ui:print_buy_result(BoughtPlayer, HName, bought),
-                        PlayersOut = Players1, BoardOut = Board1
+                        ( player:is_bankrupt(BoughtPlayer) ->
+                            ui:print_bankrupt(BoughtPlayer),
+                            remove_player_by_id(Players, Pid, PlayersOut),
+                            BoardOut = Board
+                        ;
+                            NewHouse = house(Hid,HName,HType,Price,Rent,Pid,Inc),
+                            board:update_house_in_board(Board, NewHouse, Board1),
+                            update_player_in_list(Players, BoughtPlayer, PlayersOut),
+                            BoardOut = Board1,
+                            ui:print_buy_result(BoughtPlayer, HName, bought)
+                        )
                     ;
                         ui:print_buy_result(PlayerMoved, HName, not_enough),
                         update_player_in_list(Players, PlayerMoved, PlayersOut),
@@ -131,15 +139,21 @@ handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
                 ;
                     RentAmount = Rent,
                     player:pay(PlayerMoved, RentAmount, Payer),
-                    ( member(player(Owner,ON,OP,OB,OBk), Players) ->
-                        player:receive(player(Owner,ON,OP,OB,OBk), RentAmount, Receiver),
-                        update_player_in_list(Players, Payer, PlayersTmp),
-                        update_player_in_list(PlayersTmp, Receiver, PlayersOut),
-                        ui:print_rent_payment(Payer, Receiver, HName, RentAmount),
+                    ( player:is_bankrupt(Payer) ->
+                        ui:print_bankrupt(Payer),
+                        remove_player_by_id(Players, Pid, PlayersOut),
                         BoardOut = Board
                     ;
-                        update_player_in_list(Players, PlayerMoved, PlayersOut),
-                        BoardOut = Board
+                        ( member(player(Owner,ON,OP,OB,OBk), Players) ->
+                            player:receive(player(Owner,ON,OP,OB,OBk), RentAmount, Receiver),
+                            update_player_in_list(Players, Payer, TempPlayers),
+                            update_player_in_list(TempPlayers, Receiver, PlayersOut),
+                            BoardOut = Board,
+                            ui:print_rent_payment(Payer, Receiver, HName, RentAmount)
+                        ;
+                            update_player_in_list(Players, PlayerMoved, PlayersOut),
+                            BoardOut = Board
+                        )
                     )
                 )
             )
@@ -151,3 +165,59 @@ handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
         update_player_in_list(Players, PlayerMoved, PlayersOut),
         BoardOut = Board
     ).
+
+% ============================
+% Leilão de venda de propriedade
+% ============================
+start_auction(Seller, HName, Players, Board, NewPlayers, NewBoard) :-
+    format("Iniciando leilão da propriedade ~w~n", [HName]),
+    Seller = player(SellerId, _, _, _, _),
+    % seleciona os outros jogadores
+    exclude(is_player_id(SellerId), Players, Bidders),
+    collect_bids(Bidders, Seller, HName, Board, Bids),
+    % encontra o maior lance
+    ( Bids = [] ->
+        writeln("Nenhum jogador participou do leilão."),
+        NewPlayers = Players,
+        NewBoard = Board
+    ;
+        sort(2, @>=, Bids, SortedBids), % ordena por valor decrescente
+        SortedBids = [player_bid(HighestBidder, Amount)|_],
+        % transfere dinheiro
+        player:pay(HighestBidder, Amount, HighestBidderPaid),
+        player:receive(Seller, Amount, SellerPaid),
+        % atualiza dono da casa
+        update_house_owner(HName, Board, HighestBidderPaid, NewBoard),
+        % atualiza lista de jogadores
+        update_player_in_list(Players, HighestBidderPaid, TempPlayers),
+        update_player_in_list(TempPlayers, SellerPaid, NewPlayers),
+        format("Propriedade ~w vendida para ~w por R$~w~n",
+               [HName, HighestBidderPaid, Amount])
+    ).
+
+% coleta lances dos jogadores
+collect_bids([], _, _, _, []).
+collect_bids([Player|Rest], Seller, HName, Board, [player_bid(Player, Bid)|OtherBids]) :-
+    Player = player(_, Name, _, Bal, _),
+    format("Jogador ~w, insira seu lance para ~w (saldo R$~w, ENTER para pular): ", [Name, HName, Bal]),
+    read_line_to_string(user_input, Input),
+    ( Input = "" -> % pula
+        Bid = 0
+    ; number_string(BidInput, Input),
+      BidInput =< Bal -> Bid = BidInput
+    ; writeln("Valor inválido, lance = 0"),
+      Bid = 0
+    ),
+    collect_bids(Rest, Seller, HName, Board, OtherBids).
+
+% atualiza o dono da casa pelo nome
+update_house_owner(HName, Board, NewOwnerPlayer, NewBoard) :-
+    NewOwnerPlayer = player(NewOwnerId, _, _, _, _),
+    % encontra casa
+    member(house(Id,HName,HType,Price,Rent,_,Inc), Board),
+    NewHouse = house(Id,HName,HType,Price,Rent,NewOwnerId,Inc),
+    board:update_house_in_board(Board, NewHouse, NewBoard).
+
+% helper
+is_player_id(Id, player(Id,_,_,_,_)).
+is_player_id(_, _) :- fail.
