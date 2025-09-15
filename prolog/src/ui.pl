@@ -16,9 +16,7 @@
     print_turn_global/2
 ]).
 
-% ==========================
-% Funções de jogo
-% ==========================
+
 print_turn(player(_,Name,Pos,Bal,_), TurnIndex) :-
     format("Turno ~w - Jogador ~w - Posição: ~w - Saldo: R$~w~n", [TurnIndex, Name, Pos, Bal]).
 

@@ -17,7 +17,7 @@ start_new_game :-
     player:register_players(Players),
     game_loop(Board, Players, 1).
 
-% Loop de jogo com contador global de turnos
+% Loop do jogo
 game_loop(Board, Players, Turn) :-
     ( length(Players, N), N =< 1 ->
         ( Players = [Winner] ->
@@ -29,12 +29,12 @@ game_loop(Board, Players, Turn) :-
             writeln("Jogo terminou sem vencedor.")
         )
     ;
-        % Seleciona o jogador da vez (fila circular)
+        % Seleciona o jogador da vez
         length(Players, Len),
         Index is ((Turn - 1) mod Len) + 1,
         nth1(Index, Players, CurrPlayer),
 
-        % Mostra turno global crescente
+        
         ui:print_turn_global(CurrPlayer, Turn),
 
         ( CurrPlayer = player(_,_,_,_,Blocked), Blocked > 0 ->

@@ -8,9 +8,7 @@
 
 ranking_file("../data/ranking.txt").
 
-% ========================================
 % Mostra o ranking
-% ========================================
 show_ranking :-
     ranking_file(File),
     ( exists_file(File) ->
@@ -24,9 +22,8 @@ show_ranking :-
 print_ranking_line(Line) :-
     ( Line = "" -> true ; writeln(Line) ).
 
-% ========================================
+
 % Atualiza estatísticas do jogador
-% ========================================
 update_stats(Name, Result) :-
     ranking_file(File),
     ( exists_file(File) ->
@@ -42,18 +39,16 @@ update_stats(Name, Result) :-
            format(Out, "~w ~w ~w~n", [N,V,D])),
     close(Out).
 
-% ========================================
-% Conversão de linhas para fatos em memória
-% ========================================
+
+% Conversão de linhas para fatos
 parse_line(Line, stat(N,V,D)) :-
     split_string(Line, " ", "", [NStr,VStr,DStr]),
     N = NStr,
     number_string(V, VStr),
     number_string(D, DStr).
 
-% ========================================
+
 % Atualiza ou cria o registro do jogador
-% ========================================
 update_player_stats([], Name, Result, [stat(Name,V,D)]) :-
     ( Result = win -> V = 1, D = 0 ; V = 0, D = 1 ).
 update_player_stats([stat(Name,V,D)|Rest], Name, Result, [stat(Name,V1,D1)|Rest]) :-
