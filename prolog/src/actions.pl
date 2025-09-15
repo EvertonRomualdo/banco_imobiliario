@@ -79,7 +79,7 @@ take_turn(Players, TurnIndex, Board, NewPlayers, NewBoard) :-
 % ============================
 % Ações ao cair em uma casa
 % ============================
-handle_landing(PlayerMoved, Players, _, Board, PlayersOut, BoardOut) :-
+handle_landing(PlayerMoved, Players, TurnIndex, Board, PlayersOut, BoardOut) :-
     PlayerMoved = player(Pid,Name,Pos,Bal,Blk),
     ( board:get_house_by_pos(Board, Pos, House) ->
         House = house(Hid,HName,HType,Price,Rent,Owner,Inc),
@@ -95,6 +95,11 @@ handle_landing(PlayerMoved, Players, _, Board, PlayersOut, BoardOut) :-
             update_player_in_list(Players, P2, PlayersOut),
             BoardOut = Board,
             writeln("Você foi para a prisão por 2 turnos!")
+
+        ; HType = special ->
+            format("Casa especial! Você joga novamente!~n"),
+            update_player_in_list(Players, PlayerMoved, PlayersTemp),
+            take_turn(PlayersTemp, TurnIndex, Board, PlayersOut, BoardOut)
 
         ; HType = city ->
             ( Owner = none ->
