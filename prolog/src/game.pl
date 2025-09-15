@@ -34,7 +34,6 @@ game_loop(Board, Players, Turn) :-
         Index is ((Turn - 1) mod Len) + 1,
         nth1(Index, Players, CurrPlayer),
 
-        
         ui:print_turn_global(CurrPlayer, Turn),
 
         ( CurrPlayer = player(_,_,_,_,Blocked), Blocked > 0 ->
@@ -52,7 +51,12 @@ game_loop(Board, Players, Turn) :-
         game_loop(NewBoard, NewPlayers, NextTurn)
     ).
 
-% Atualiza derrotas de todos exceto vencedor
+% Atualiza derrotas de todos os jogadores exceto o vencedor
 update_losers_stats([], _).
-update_losers_stats([player(_,Name,_,_,_)], WinnerName) :-
-    ( Name \== WinnerName -> ranking:update_stats(Name, loss) ; true ).
+update_losers_stats([player(_,Name,_,_,_)|Rest], WinnerName) :-
+    ( sub_atom(Name, 0, 3, _, "BOT") ->
+        true % ignora bots, não registra derrota
+    ; Name \= WinnerName ->
+        ranking:update_stats(Name, loss)
+    ; true ),
+    update_losers_stats(Rest, WinnerName).
