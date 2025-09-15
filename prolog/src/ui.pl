@@ -13,7 +13,8 @@
     print_buy_result/3,
     print_rent_payment/4,
     print_bankrupt/1,
-    print_turn_global/2
+    print_turn_global/2,
+    print_board/2
 ]).
 
 
@@ -89,3 +90,108 @@ print_main_menu :-
 print_turn_global(player(_,Name,Pos,Bal,_), Turn) :-
     format("Turno ~d - Jogador ~w - Posição: ~d - Saldo: R$~d~n",
            [Turn, Name, Pos, Bal]).
+
+%impresão do tabuleiro é limitada a 20 casas.
+%Caso ultrapasse limite de 20 casas a execução falhara
+%Nas regras do jogo o tabuleiro foi limitado a 20 casas
+%Por simplificação apenas a inicial de cada jogador é mostrada
+
+% função principal
+print_board(Board, Players) :-
+    length(Board, Len),
+    ( Len =:= 20 ->
+        nl, writeln("=== TABULEIRO ==="),
+        print_square_board(Board, Players),
+        writeln("=================")
+    ).
+
+print_square_board(Board, Players) :-
+    TopIdxs = [0,1,2,3,4],
+    RightIdxs = [5,6,7,8,9],
+    BottomIdxs = [10,11,12,13,14],
+    LeftIdxs = [15,16,17,18,19],
+
+    % imprimimos topo (0..4)
+    print_top_row(TopIdxs, Board, Players), nl,
+
+    
+    reverse(LeftIdxs, LeftRev),            
+    print_vertical_rows(LeftRev, RightIdxs, Board, Players),
+
+    
+    reverse(BottomIdxs, BottomRev),
+    print_top_row(BottomRev, Board, Players), nl.
+
+% largura fixa de célula
+cell_width(18).
+
+% imprime uma linha de casas (topo ou base)
+print_top_row([], _, _).
+print_top_row([Idx|Rest], Board, Players) :-
+    cell_text(Board, Players, Idx, Text),
+    write("|"), write(Text),
+    print_top_row(Rest, Board, Players).
+print_top_row_end :- write("|").
+
+% imprime as linhas verticais
+print_vertical_rows([], [], _, _).
+print_vertical_rows([L|Ls], [R|Rs], Board, Players) :-
+    
+    cell_text(Board, Players, L, LeftText),
+    cell_text(Board, Players, R, RightText),
+
+   
+    cell_width(W), MidW is W * 3 + 2,  
+    string_spaces(MidW, MidSpaces),
+
+    
+    write("|"), write(LeftText),
+    write("|"), write(MidSpaces), write("|"),
+    write(RightText), write("|"), nl,
+
+    print_vertical_rows(Ls, Rs, Board, Players).
+
+
+cell_text(Board, Players, Index, Padded) :-
+    ( nth0(Index, Board, house(_, Name, _, _, _, _, _)) ->
+        players_initials_at(Players, Index, PInit), % e.g. "E" ou "E,B"
+        ( PInit == "" -> format(string(Base), "~w", [Name])
+        ; format(string(Base), "~w(~w)", [Name, PInit])
+        ),
+        cell_width(W),
+        pad_to_width(Base, W, Padded)
+    ;  % índice fora do board: string vazia padded
+        cell_width(W),
+        pad_to_width("", W, Padded)
+    ).
+
+
+players_initials_at(Players, Index, Str) :-
+    findall(Char,
+        ( member(player(_, Name, Pos, _, _), Players),
+          Pos =:= Index,
+          string_codes(Name, Codes),
+          Codes = [First|_],
+          char_code(Char, First)
+        ),
+        Chars),
+    ( Chars == [] -> Str = "" ; atomic_list_concat(Chars, ",", Str) ).
+
+
+pad_to_width(Src, W, Out) :-
+    string_length(Src, L),
+    ( L >= W ->
+        sub_string(Src, 0, W, _, Out)
+    ;
+        Pad is W - L,
+        string_spaces(Pad, Spaces),
+        string_concat(Src, Spaces, Out)
+    ).
+
+% cria string de N espaços
+string_spaces(0, "") :- !.
+string_spaces(N, Spaces) :-
+    N > 0,
+    length(L, N),
+    maplist(=(' '), L),
+    string_chars(Spaces, L).

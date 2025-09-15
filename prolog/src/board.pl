@@ -28,13 +28,7 @@ initial_board([
     house(16, "Natal", city, 125, 25, none, 12),
     house(17, "Florianópolis", city, 130, 26, none, 13),
     house(18, "Manaus", city, 140, 28, none, 14),
-    house(19, "Recife", city, 145, 29, none, 14),
-    house(20, "Porto Alegre", city, 150, 30, none, 15),
-    house(21, "Imposto", tax, 0, 0, none, 0),
-    house(22, "Prisao", prison, 0, 0, none, 0),
-    house(23, "Feriado", special, 0, 0, none, 0),
-    house(24, "Cidade Fantasma", special, 0, 0, none, 0),
-    house(25, "Cidade Misteriosa", special, 0, 0, none, 0)
+    house(19, "Recife", city, 145, 29, none, 14)
 ]).
 
 get_house_by_pos(Board, Pos, House) :-

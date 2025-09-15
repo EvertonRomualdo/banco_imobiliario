@@ -22,6 +22,7 @@ ask_yes_no(Response) :-
 % Menu do jogador
 
 print_player_menu :-
+
     nl,
     writeln('--- Menu do Jogador ---'),
     writeln('1. Ver saldo'),
@@ -80,6 +81,9 @@ decide_bid(player(_,_,_,Bal,_), Players, Bid) :-
 take_turn(Players, TurnIndex, Board, NewPlayers, NewBoard) :-
     nth1(TurnIndex, Players, CurrPlayer),
     CurrPlayer = player(_,Name,_,_,_),
+
+    ui:print_board(Board, Players),
+
     ( sub_atom(Name, 0, 3, _, "BOT") ->
         bot_turn(CurrPlayer, Players, TurnIndex, Board, NewPlayers, NewBoard)
     ;
