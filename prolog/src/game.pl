@@ -1,7 +1,7 @@
 :- encoding(utf8).
 :- module(game, [
     start_new_game/0,
-    game_loop/1
+    game_loop/3
 ]).
 
 :- use_module(board).
@@ -10,36 +10,49 @@
 :- use_module(ui).
 :- use_module(ranking).
 
-% GameState: state(Board, Players, TurnNumber)
-
+% Inicia novo jogo
 start_new_game :-
+    writeln("=== Iniciando novo jogo ==="),
     board:initial_board(Board),
     player:register_players(Players),
-    GameState = state(Board, Players, 1),
-    game_loop(GameState).
+    game_loop(Board, Players, 1).
 
-% Loop principal do jogo
-game_loop(state(Board, Players, Turn)) :-
-    length(Players, N),
-    ( N =< 1 ->
+% Loop de jogo com contador global de turnos
+game_loop(Board, Players, Turn) :-
+    ( length(Players, N), N =< 1 ->
         ( Players = [Winner] ->
-            ui:print_message("Jogo terminou! Vencedor:"),
             Winner = player(_,Name,_,_,_),
-            format("~w venceu a partida!~n", [Name]),
+            format("Jogo terminou! Vencedor: ~w~n", [Name]),
             ranking:update_stats(Name, win),
-            update_losers_stats(Players, Name),
-            !
+            update_losers_stats(Players, Name)
         ;
-            ui:print_message("Jogo terminou sem vencedor.")
+            writeln("Jogo terminou sem vencedor.")
         )
     ;
-        Index is ((Turn - 1) mod N) + 1,
-        actions:take_turn(Players, Index, Board, NewPlayers, NewBoard),
+        % Seleciona o jogador da vez (fila circular)
+        length(Players, Len),
+        Index is ((Turn - 1) mod Len) + 1,
+        nth1(Index, Players, CurrPlayer),
+
+        % Mostra turno global crescente
+        ui:print_turn_global(CurrPlayer, Turn),
+
+        ( CurrPlayer = player(_,_,_,_,Blocked), Blocked > 0 ->
+            NewBlocked is Blocked - 1,
+            CurrPlayer = player(Id,Name,Pos,Bal,_),
+            Updated = player(Id,Name,Pos,Bal,NewBlocked),
+            player:update_player_in_list(Players, Updated, NewPlayers),
+            NewBoard = Board,
+            writeln("Jogador está preso, turno consumido.")
+        ;
+            actions:take_turn(Players, Index, Board, NewPlayers, NewBoard)
+        ),
+
         NextTurn is Turn + 1,
-        game_loop(state(NewBoard, NewPlayers, NextTurn))
+        game_loop(NewBoard, NewPlayers, NextTurn)
     ).
 
-% Atualiza derrotas de todos os que não venceram
+% Atualiza derrotas de todos exceto vencedor
 update_losers_stats([], _).
 update_losers_stats([player(_,Name,_,_,_)], WinnerName) :-
     ( Name \== WinnerName -> ranking:update_stats(Name, loss) ; true ).

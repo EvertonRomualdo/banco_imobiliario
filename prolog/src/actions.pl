@@ -59,7 +59,6 @@ show_player_menu_loop(CurrPlayer, Players, Board) :-
 % ============================
 take_turn(Players, TurnIndex, Board, NewPlayers, NewBoard) :-
     nth1(TurnIndex, Players, CurrPlayer),
-    ui:print_turn(CurrPlayer, TurnIndex),
     ( CurrPlayer = player(_,_,_,_,Blocked), Blocked > 0 ->
         NewBlocked is Blocked - 1,
         CurrPlayer = player(Id,Name,Pos,Bal,_),

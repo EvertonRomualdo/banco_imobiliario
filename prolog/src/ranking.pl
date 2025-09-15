@@ -31,12 +31,9 @@ update_stats(Name, Result) :-
            format(Out, "~w ~w ~w~n", [N,V,D])),
     close(Out).
 
-% Atualiza estatísticas de um jogador
-update_player_stats([], Name, Result, [stat(Name,NewV,NewD)]) :-
-    ( Result = win -> NewV = 1, NewD = 0
-    ; Result = loss -> NewV = 0, NewD = 1 ).
+update_player_stats([], Name, Result, [stat(Name,V,D)]) :-
+    ( Result = win -> V = 1, D = 0 ; V = 0, D = 1 ).
 update_player_stats([stat(Name,V,D)|Rest], Name, Result, [stat(Name,V1,D1)|Rest]) :-
-    ( Result = win -> V1 is V+1, D1 = D
-    ; Result = loss -> D1 is D+1, V1 = V ).
+    ( Result = win -> V1 is V+1, D1 = D ; V1 = V, D1 is D+1 ).
 update_player_stats([H|Rest], Name, Result, [H|NewRest]) :-
     update_player_stats(Rest, Name, Result, NewRest).

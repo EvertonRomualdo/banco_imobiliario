@@ -8,7 +8,7 @@
     receive/3
 ]).
 
-% player(Id, Name, Pos, Balance, blockedTurns)
+% player(Id, Name, Pos, Balance, BlockedTurns)
 
 % Cadastro de jogadores com saldo inicial fixo em 500
 register_players(Players) :-

@@ -12,7 +12,8 @@
     print_all_info/2,
     print_buy_result/3,
     print_rent_payment/4,
-    print_bankrupt/1
+    print_bankrupt/1,
+    print_turn_global/2
 ]).
 
 % ==========================
@@ -84,3 +85,9 @@ print_main_menu :-
     writeln('3. Ver ranking'),
     writeln('0. Sair'),
     write('Escolha uma opção: ').
+
+
+
+print_turn_global(player(_,Name,Pos,Bal,_), Turn) :-
+    format("Turno ~d - Jogador ~w - Posição: ~d - Saldo: R$~d~n",
+           [Turn, Name, Pos, Bal]).
