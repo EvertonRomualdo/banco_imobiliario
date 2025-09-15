@@ -318,8 +318,9 @@ start_auction(Seller, HName, Players, Board, NewPlayers, NewBoard) :-
         % atualiza lista de jogadores substituindo os dois
         update_player_in_list(Players, HighestBidderPaid, TempPlayers),
         update_player_in_list(TempPlayers, SellerPaid, NewPlayers),
+        HighestBidderPaid = player(_, BuyerName, _, _, _),
         format("Propriedade ~w vendida para ~w por R$~w~n",
-               [HName, HighestBidderPaid, Amount])
+               [HName, BuyerName, Amount])
     ).
 
 bid_positive(player_bid(_, Amount)) :- Amount > 0.
